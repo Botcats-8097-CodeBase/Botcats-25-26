@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.bylazar.graph.GraphManager;
+import com.bylazar.graph.PanelsGraph;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -10,6 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.RobotConstants;
@@ -17,8 +24,8 @@ import org.firstinspires.ftc.teamcode.utils.Vector2D;
 
 import java.util.List;
 
-@TeleOp(name = "teleopbasic")
-public class TeleOpBasic extends OpMode {
+@TeleOp(name = "acceleration tester")
+public class AccelerationTester extends OpMode {
 
     List<LynxModule> allHubs;
 
@@ -32,6 +39,8 @@ public class TeleOpBasic extends OpMode {
     public double angle;
     public double finalAngle;
 
+    GoBildaPinpointDriver pinpoint;
+
     ElapsedTime et = new ElapsedTime();
 
     IMU.Parameters parameters = new IMU.Parameters(
@@ -40,6 +49,9 @@ public class TeleOpBasic extends OpMode {
                     RevHubOrientationOnRobot.UsbFacingDirection.UP
             )
     );
+
+    TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+    GraphManager graphManager = PanelsGraph.INSTANCE.getManager();
 
     @Override
     public void init() {
@@ -107,7 +119,26 @@ public class TeleOpBasic extends OpMode {
         frontRightDrive.setPower(frontRightPower * coefficient);
         frontLeftDrive.setPower(frontLeftPower * coefficient);
 
+        double posX = pinpoint.getPosX(DistanceUnit.INCH);
+        double posY = pinpoint.getPosY(DistanceUnit.INCH);
+        double velX = pinpoint.getVelX(DistanceUnit.INCH);
+        double velY = pinpoint.getVelY(DistanceUnit.INCH);
 
+        panelsTelemetry.debug("posX", posX);
+        panelsTelemetry.debug("posY", posY);
+        panelsTelemetry.debug("velX", velX);
+        panelsTelemetry.debug("velY", velY);
+
+        graphManager.addData("posX", posX);
+        graphManager.addData("posY", posY);
+        graphManager.addData("velX", velX);
+        graphManager.addData("velY", velY);
+
+
+
+        panelsTelemetry.update();
+
+        graphManager.update();
 
 
 
@@ -142,5 +173,24 @@ public class TeleOpBasic extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);
         imu.resetYaw();
+
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+        // Configure the sensor
+        configurePinpoint();
+
+        // Seet the location of the robot - this should be the place you are starting the robot from
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
+    }
+
+    public void configurePinpoint(){
+        pinpoint.setOffsets(-3.125, 3.125, DistanceUnit.INCH); //these are tuned for 3110-0002-0001 Product Insight #1
+
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
+                GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        pinpoint.resetPosAndIMU();
     }
 }

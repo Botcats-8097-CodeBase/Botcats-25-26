@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+
 public class RobotConstants {
     public static String leftBackDiveName = "leftBack";
     public static String leftFrontDiveName = "leftFront";
@@ -11,4 +12,5 @@ public class RobotConstants {
     public static DcMotorSimple.Direction leftFrontDiveDirection = DcMotorSimple.Direction.REVERSE;
     public static DcMotorSimple.Direction rightBackDiveDirection = DcMotorSimple.Direction.FORWARD;
     public static DcMotorSimple.Direction rightFrontDiveDirection = DcMotorSimple.Direction.FORWARD;
+
 }

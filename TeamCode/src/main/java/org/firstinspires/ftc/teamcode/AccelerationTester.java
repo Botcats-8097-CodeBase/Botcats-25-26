@@ -53,6 +53,9 @@ public class AccelerationTester extends OpMode {
     TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
     GraphManager graphManager = PanelsGraph.INSTANCE.getManager();
 
+    double maxVel = 0;
+    double maxAcc = 0;
+
     @Override
     public void init() {
         initRobot();
@@ -119,32 +122,44 @@ public class AccelerationTester extends OpMode {
         frontRightDrive.setPower(frontRightPower * coefficient);
         frontLeftDrive.setPower(frontLeftPower * coefficient);
 
+        pinpoint.update();
+
         double posX = pinpoint.getPosX(DistanceUnit.INCH);
         double posY = pinpoint.getPosY(DistanceUnit.INCH);
         double velX = pinpoint.getVelX(DistanceUnit.INCH);
         double velY = pinpoint.getVelY(DistanceUnit.INCH);
+        double vel = Math.sqrt(Math.pow(velX, 2) + Math.pow(velY, 2));
+        double accX = velX / dt;
+        double accY = velY / dt;
+        double acc = Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2));
+        maxVel = Math.max(maxVel, vel);
+        maxAcc = Math.max(maxAcc, acc);
 
         panelsTelemetry.debug("posX", posX);
         panelsTelemetry.debug("posY", posY);
         panelsTelemetry.debug("velX", velX);
         panelsTelemetry.debug("velY", velY);
+        panelsTelemetry.debug("vel", vel);
+        panelsTelemetry.debug("maxVel", maxVel);
+        panelsTelemetry.debug("accX", accX);
+        panelsTelemetry.debug("accY", accY);
+        panelsTelemetry.debug("acc", acc);
+        panelsTelemetry.debug("maxAcc", maxAcc);
 
         graphManager.addData("posX", posX);
         graphManager.addData("posY", posY);
         graphManager.addData("velX", velX);
         graphManager.addData("velY", velY);
+        graphManager.addData("vel", vel);
+        graphManager.addData("maxVel", maxVel);
+        graphManager.addData("accX", accX);
+        graphManager.addData("accY", accY);
+        graphManager.addData("acc", acc);
+        graphManager.addData("maxAcc", maxAcc);
 
-
-
-        panelsTelemetry.update();
+        panelsTelemetry.update(telemetry);
 
         graphManager.update();
-
-
-
-
-
-        telemetry.update();
 
     }
 

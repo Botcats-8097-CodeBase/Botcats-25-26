@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.utils.BasicRobot;
 import org.firstinspires.ftc.teamcode.utils.ButtonToggle;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.utils.Vector2D;
@@ -22,14 +23,9 @@ public class TeleOpBasic extends OpMode {
 
     List<LynxModule> allHubs;
 
-    DcMotor backLeftDrive;
-    DcMotor backRightDrive;
-    DcMotor frontLeftDrive;
-    DcMotor frontRightDrive;
+    BasicRobot robot;
 
     public IMU imu;
-
-    public double angle;
     public double finalAngle;
 
     ElapsedTime et = new ElapsedTime();
@@ -61,6 +57,7 @@ public class TeleOpBasic extends OpMode {
             hub.clearBulkCache();
         }
 
+        // reset IMU
         if (gamepad1.y) {
             imu.resetYaw();
             imu.initialize(parameters);
@@ -71,25 +68,6 @@ public class TeleOpBasic extends OpMode {
         telemetry.addData("Yaw", yaw);
         telemetry.addData("Expected Yaw", finalAngle);
 
-        angle = robotOrientation.getYaw(AngleUnit.RADIANS);
-
-        double x = gamepad1.left_stick_x;
-        double y = -gamepad1.left_stick_y;
-        double rx = gamepad1.right_stick_x;
-
-        // rotates the left stick and changes the x & y values accordingly (field centric)
-        Vector2D inputVector = new Vector2D(x, y);
-        Vector2D rotatedVector = inputVector.rotateVector(-angle);
-
-        x = rotatedVector.x;
-        y = rotatedVector.y;
-
-        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1.1);
-        double frontLeftPower = (y + x + rx) / denominator;
-        double backLeftPower = (y - x + rx) / denominator;
-        double frontRightPower = (y - x - rx) / denominator;
-        double backRightPower = (y + x - rx) / denominator;
-
         // pressurising the right trigger slows down the drive train
         double coefficient = 0.35;
         if(gamepad1.right_trigger < 0.5)
@@ -98,20 +76,14 @@ public class TeleOpBasic extends OpMode {
         }
         else
         {
-            telemetry.addData("Speed Mode", "trigger on");
+            telemetry.addData("Speed Mode", "on");
             coefficient = 1;
         }
 
-        backRightDrive.setPower(backRightPower * coefficient);
-        backLeftDrive.setPower(backLeftPower * coefficient);
-        frontRightDrive.setPower(frontRightPower * coefficient);
-        frontLeftDrive.setPower(frontLeftPower * coefficient);
-
-
-
-
-
-
+        robot.drivePower(
+                new Vector2D(gamepad1.left_stick_x, -gamepad1.left_stick_y)
+                        .rotateVector(-Math.toRadians(yaw))
+                , gamepad1.right_stick_x, coefficient);
 
         telemetry.update();
 
@@ -124,20 +96,9 @@ public class TeleOpBasic extends OpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        backLeftDrive = hardwareMap.get(DcMotor.class, RobotConstants.leftBackDiveName);
-        backRightDrive = hardwareMap.get(DcMotor.class, RobotConstants.rightBackDiveName);
-        frontLeftDrive = hardwareMap.get(DcMotor.class, RobotConstants.leftFrontDiveName);
-        frontRightDrive = hardwareMap.get(DcMotor.class, RobotConstants.rightFrontDiveName);
+        robot.init(hardwareMap);
 
-        backLeftDrive.setDirection(RobotConstants.leftBackDiveDirection);
-        backRightDrive.setDirection(RobotConstants.rightBackDiveDirection);
-        frontLeftDrive.setDirection(RobotConstants.leftFrontDiveDirection);
-        frontRightDrive.setDirection(RobotConstants.rightFrontDiveDirection);
 
-        backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(parameters);

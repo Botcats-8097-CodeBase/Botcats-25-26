@@ -70,11 +70,19 @@ public class motorTest extends LinearOpMode {
         leftDrive  = hardwareMap.get(DcMotor.class, "motor1");
         rightDrive = hardwareMap.get(DcMotor.class, "motor2");
 
+        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -84,16 +92,10 @@ public class motorTest extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
-            double leftPower = 1.0;
+            double leftPower = gamepad1.right_stick_x;
 
-            if (gamepad1.a) {
-                leftDrive.setPower(leftPower);
-                rightDrive.setPower(leftPower);
-            }
-            else {
-                leftDrive.setPower(leftPower);
-                rightDrive.setPower(-leftPower);
-            }
+            leftDrive.setPower(leftPower);
+            rightDrive.setPower(leftPower);
         }
     }
 }

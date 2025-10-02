@@ -81,6 +81,9 @@ public class AprilTagRun extends LinearOpMode {
 
 
 
+
+
+        visionPortal.setProcessorEnabled(aprilTag, true);
         visionPortal = builder.build();
     }
 

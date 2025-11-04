@@ -33,7 +33,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Configurable
@@ -44,12 +44,14 @@ public class CustomizableTester extends LinearOpMode {
     public static double motorC1Power = 0.0;
     public static double motorC2Power = 0.0;
     public static double motorC3Power = 0.0;
+    public static double servo1Position = 0.0;
 
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor motorC0 = null;
     private DcMotor motorC1 = null;
     private DcMotor motorC2 = null;
     private DcMotor motorC3 = null;
+    private Servo servo1 = null;
 
     @Override
     public void runOpMode() {
@@ -59,7 +61,8 @@ public class CustomizableTester extends LinearOpMode {
         motorC0 = hardwareMap.get(DcMotor.class, "motorC0");
         motorC1 = hardwareMap.get(DcMotor.class, "motorC1");
         motorC2 = hardwareMap.get(DcMotor.class, "motorC2");
-        motorC3 = hardwareMap.get(DcMotor.class, "motorC2");
+        motorC3 = hardwareMap.get(DcMotor.class, "motorC3");
+        servo1 = hardwareMap.get(Servo.class, "servo1");
 
         motorC0.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorC1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -88,6 +91,8 @@ public class CustomizableTester extends LinearOpMode {
             motorC2.setPower(motorC2Power);
 
             motorC3.setPower(motorC3Power);
+
+            servo1.setPosition(servo1Position);
         }
     }
 }

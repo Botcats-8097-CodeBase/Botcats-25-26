@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.bylazar.graph.GraphManager;
-import com.bylazar.graph.PanelsGraph;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -51,7 +49,6 @@ public class AccelerationTester extends OpMode {
     );
 
     TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
-    GraphManager graphManager = PanelsGraph.INSTANCE.getManager();
 
     double maxVel = 0;
     double maxAcc = 0;
@@ -135,31 +132,18 @@ public class AccelerationTester extends OpMode {
         maxVel = Math.max(maxVel, vel);
         maxAcc = Math.max(maxAcc, acc);
 
-        panelsTelemetry.debug("posX", posX);
-        panelsTelemetry.debug("posY", posY);
-        panelsTelemetry.debug("velX", velX);
-        panelsTelemetry.debug("velY", velY);
-        panelsTelemetry.debug("vel", vel);
-        panelsTelemetry.debug("maxVel", maxVel);
-        panelsTelemetry.debug("accX", accX);
-        panelsTelemetry.debug("accY", accY);
-        panelsTelemetry.debug("acc", acc);
-        panelsTelemetry.debug("maxAcc", maxAcc);
-
-        graphManager.addData("posX", posX);
-        graphManager.addData("posY", posY);
-        graphManager.addData("velX", velX);
-        graphManager.addData("velY", velY);
-        graphManager.addData("vel", vel);
-        graphManager.addData("maxVel", maxVel);
-        graphManager.addData("accX", accX);
-        graphManager.addData("accY", accY);
-        graphManager.addData("acc", acc);
-        graphManager.addData("maxAcc", maxAcc);
+        panelsTelemetry.addData("posX", posX);
+        panelsTelemetry.addData("posY", posY);
+        panelsTelemetry.addData("velX", velX);
+        panelsTelemetry.addData("velY", velY);
+        panelsTelemetry.addData("vel", vel);
+        panelsTelemetry.addData("maxVel", maxVel);
+        panelsTelemetry.addData("accX", accX);
+        panelsTelemetry.addData("accY", accY);
+        panelsTelemetry.addData("acc", acc);
+        panelsTelemetry.addData("maxAcc", maxAcc);
 
         panelsTelemetry.update(telemetry);
-
-        graphManager.update();
 
     }
 

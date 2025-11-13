@@ -59,7 +59,7 @@ public class AprilTagRun extends LinearOpMode {
                 .setDrawCubeProjection(true)
                 .setDrawTagOutline(true)
                 .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
+                //.setTagLibrary(AprilTagGameDatabase.getDecodeTagLibrary())
                 .setOutputUnits(DistanceUnit.METER, AngleUnit.DEGREES)
 
                 // Camera calibration here
@@ -72,7 +72,7 @@ public class AprilTagRun extends LinearOpMode {
         builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
 
         // set cam resolutin pls
-        builder.setCameraResolution(new Size(1280, 720));
+        builder.setCameraResolution(new Size(640, 480));
         builder.enableLiveView(true);
         builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
         builder.setAutoStopLiveView(true);
@@ -80,11 +80,8 @@ public class AprilTagRun extends LinearOpMode {
         builder.addProcessor(aprilTag);
 
 
-
-
-
-        visionPortal.setProcessorEnabled(aprilTag, true);
         visionPortal = builder.build();
+        visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
     private void telemetryAprilTag() {
@@ -92,6 +89,7 @@ public class AprilTagRun extends LinearOpMode {
         telemetry.addData("# AT Detected:", currentDetections.size());
 
         for (AprilTagDetection detection : currentDetections) {
+            telemetry.addData("Has metadata", detection.metadata != null);
             if (detection.metadata != null) {
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (meter)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
@@ -101,6 +99,7 @@ public class AprilTagRun extends LinearOpMode {
             else {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+
             }
         }
 

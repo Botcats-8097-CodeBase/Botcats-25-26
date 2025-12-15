@@ -11,6 +11,8 @@ public class BasicRobot {
     DcMotor frontLeftDrive;
     DcMotor frontRightDrive;
 
+    public BasicRobot() {}
+
     public void init(HardwareMap hardwareMap) {
         backLeftDrive = hardwareMap.get(DcMotor.class, RobotConstants.leftBackDiveName);
         backRightDrive = hardwareMap.get(DcMotor.class, RobotConstants.rightBackDiveName);

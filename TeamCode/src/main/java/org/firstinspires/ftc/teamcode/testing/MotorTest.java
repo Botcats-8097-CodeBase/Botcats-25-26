@@ -27,72 +27,72 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.testing;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
+@Configurable
+@TeleOp(name="test motor")
+public class MotorTest extends LinearOpMode {
 
-/*
- * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
- * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
- * of the FTC Driver Station. When a selection is made from the menu, the corresponding OpMode
- * class is instantiated on the Robot Controller and executed.
- *
- * This particular OpMode just executes a basic Tank Drive Teleop for a two wheeled robot
- * It includes all the skeletal structure that all linear OpModes contain.
- *
- * Use Aendroid Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
+    public static double motorC0Power = 0.0;
+    public static double motorC1Power = 0.0;
+    public static double motorC2Power = 0.0;
+    public static double motorC3Power = 0.0;
+    public static double servo1Position = 0.0;
 
-@TeleOp(name="motorTest")
-public class motorTest extends LinearOpMode {
-
-    // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
+    private DcMotor motorC0 = null;
+    private DcMotor motorC1 = null;
+    private DcMotor motorC2 = null;
+    private DcMotor motorC3 = null;
+    private Servo servo1 = null;
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        leftDrive  = hardwareMap.get(DcMotor.class, "motor1");
-        rightDrive = hardwareMap.get(DcMotor.class, "motor2");
+        motorC0 = hardwareMap.get(DcMotor.class, "motorC0");
+        motorC1 = hardwareMap.get(DcMotor.class, "motorC1");
+        motorC2 = hardwareMap.get(DcMotor.class, "motorC2");
+        motorC3 = hardwareMap.get(DcMotor.class, "motorC3");
+        servo1 = hardwareMap.get(Servo.class, "servo1");
 
-        leftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorC0.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorC1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorC2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorC3.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorC0.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorC1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorC2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorC3.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        motorC0.setDirection(DcMotor.Direction.FORWARD);
+        motorC1.setDirection(DcMotor.Direction.FORWARD);
+        motorC2.setDirection(DcMotor.Direction.FORWARD);
+        motorC3.setDirection(DcMotor.Direction.FORWARD);
 
         waitForStart();
         runtime.reset();
 
         while (opModeIsActive()) {
-            double leftPower = 1.0;
 
-            if (gamepad1.a) {
-                leftDrive.setPower(leftPower);
-                rightDrive.setPower(leftPower);
-            }
-            else {
-                leftDrive.setPower(leftPower);
-                rightDrive.setPower(-leftPower);
-            }
+            motorC0.setPower(motorC0Power);
+
+            motorC1.setPower(motorC1Power);
+
+            motorC2.setPower(motorC2Power);
+
+            motorC3.setPower(motorC3Power);
+
+            servo1.setPosition(servo1Position);
         }
     }
 }

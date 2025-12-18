@@ -73,7 +73,7 @@ public class AS5600 extends I2cDeviceSynchDevice<I2cDeviceSynch> {
     }
 
     public void zeroHere() {
-        double angle = getAngleRaw0to360() * directionSign;
+        double angle = getAngleRaw0to360();
         RobotConstants.yawTurretStartEncoder = angle;
     }
 }

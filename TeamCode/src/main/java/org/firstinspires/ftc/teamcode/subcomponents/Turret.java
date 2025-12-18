@@ -17,7 +17,8 @@ import org.firstinspires.ftc.teamcode.utils.VelocityMotor;
 public class Turret {
     public RunToMotor yawMotor = new RunToMotor();
     public AS5600 yawTurretEncoder;
-    public VelocityMotor spinnerMotor = new VelocityMotor();
+    public VelocityMotor spinnerMotor1 = new VelocityMotor();
+    public DcMotor spinnerMotor2;
     public Servo pitchTurretServo;
     public Servo pusherServo;
 
@@ -28,9 +29,6 @@ public class Turret {
     double kickerStartTimeMs = -1;
     double[] targetPreset = {0, 0};
 
-    private double angleDeadbandDeg = 1.0;
-    private double derivativeDeadband = 5.0;
-
     public Turret() {}
 
     public void init(HardwareMap hardwareMap) {
@@ -40,12 +38,18 @@ public class Turret {
         yawMotor.setPosController(new PIDController(0.015, 0, 0.0005, 0));
         yawMotor.setMaxPower(0.4);
 
-        spinnerMotor.init(hardwareMap, RobotConstants.spinnerMotorName);
-        spinnerMotor.setDirection(RobotConstants.spinnerMotorDirection);
-        spinnerMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        spinnerMotor.setMaxPower(1);
-        spinnerMotor.setMaxBoundsForTarget(0.01);
-        spinnerMotor.setVelController(new PIDFController(1.0, 0, 0, 0.400, 0));
+        spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
+        spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
+        spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        spinnerMotor1.setMaxPower(1);
+        spinnerMotor1.setMaxBoundsForTarget(0.01);
+        spinnerMotor1.setVelController(new PIDFController(1.2, 0.002, 0, 0.420, 100));
+
+        spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
+        spinnerMotor2.setDirection(RobotConstants.spinnerMotor2Direction);
+        spinnerMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        spinnerMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        spinnerMotor2.setPower(0);
 
         pitchTurretServo = hardwareMap.get(Servo.class, RobotConstants.pitchTurretServoName);
         pitchTurretServo.setPosition(0.5);
@@ -66,10 +70,11 @@ public class Turret {
 
         yawMotor.update(yawTurretEncoder.getAngle180to180());
 
-        spinnerMotor.update();
+        spinnerMotor1.update();
+        spinnerMotor2.setPower(spinnerMotor1.getPower());
 
         if (shootStartTimeMs != -1) {
-            if (spinnerMotor.isAtTargetVelocity() && kickerStartTimeMs == -1) {
+            if (spinnerMotor1.isAtTargetVelocity() && kickerStartTimeMs == -1) {
                 kickerStartTimeMs = et.milliseconds();
                 pusherServo.setPosition(RobotConstants.pusherEndPos);
             }
@@ -93,12 +98,12 @@ public class Turret {
     }
 
     public void goToPreset(double[] preset) {
-        spinnerMotor.setTargetVelocity(preset[0]);
+        spinnerMotor1.setTargetVelocity(preset[0]);
         pitchTurretServo.setPosition(preset[1]);
     }
 
     public void goToPreset() {
-        spinnerMotor.setTargetVelocity(targetPreset[0]);
+        spinnerMotor1.setTargetVelocity(targetPreset[0]);
         pitchTurretServo.setPosition(targetPreset[1]);
     }
 
@@ -124,7 +129,7 @@ public class Turret {
     }
 
     public void stopSpinner() {
-        spinnerMotor.stop();
+        spinnerMotor1.stop();
     }
 
     public double getCurrentFacing() {

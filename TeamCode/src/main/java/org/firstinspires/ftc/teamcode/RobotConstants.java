@@ -21,14 +21,17 @@ public class RobotConstants {
     public static double intakeMotorPower = 0.7;
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartEncoder = 327.0;
+    public static double yawTurretStartEncoder = 311.0;
     public static double yawTurretMaxAngle = 80;
     public static double yawTurretMinAngle = -80;
 
     public static String yawTurretEncoderName = "yawTurretEncoder";
 
-    public static String spinnerMotorName = "spinner";
-    public static DcMotorSimple.Direction spinnerMotorDirection = DcMotorSimple.Direction.FORWARD;
+    public static String spinnerMotor1Name = "spinner1";
+    public static DcMotorSimple.Direction spinnerMotor1Direction = DcMotorSimple.Direction.REVERSE;
+    public static String spinnerMotor2Name = "spinner2";
+    public static DcMotorSimple.Direction spinnerMotor2Direction = DcMotorSimple.Direction.REVERSE;
+
     public static String pitchTurretServoName = "pitchTurret";
 
     public static String pusherServoName = "pusher";

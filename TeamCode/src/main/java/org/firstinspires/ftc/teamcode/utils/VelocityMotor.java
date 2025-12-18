@@ -16,51 +16,17 @@ public class VelocityMotor {
 
     ElapsedTime deltaTimer = new ElapsedTime();
 
-    public double getTargetVelocity() {
-        return targetVelocity;
-    }
-
     double targetVelocity = 0;
 
-    public double getMaxVelocity() {
-        return maxVelocity;
-    }
+    NoiseFilter velocityFilter = new NoiseFilter(0.3, 5);
+    NoiseFilter accelerationFilter = new NoiseFilter(0.3, 5);
 
-    public void setMaxVelocity(double maxVelocity) {
-        this.maxVelocity = maxVelocity;
-    }
-
-    double maxVelocity = 50;
-    double maxAcceleration = 10;
-
-    double currentVelocity = 0;
-
-    public double getCurrentAcceleration() {
-        return currentAcceleration;
-    }
-
-    public void setCurrentAcceleration(double currentAcceleration) {
-        this.currentAcceleration = currentAcceleration;
-    }
-
-    double currentAcceleration = 0;
-    ArrayList<Double> velocities = new ArrayList<>();
-    ArrayList<Double> accelerations = new ArrayList<>();
+    boolean isStopped = true;
     double currentPower = 0;
     double lastPos = 0;
     double maxPower = 0.9;
     double maxAccelForTarget = 0.0001;
 
-    public boolean isStopped() {
-        return isStopped;
-    }
-
-    public void setStopped(boolean stopped) {
-        isStopped = stopped;
-    }
-
-    boolean isStopped = false;
-    boolean hasBeenStopped = false;
     double maxBoundsForTarget = 0.1;
 
     public VelocityMotor() {}
@@ -74,64 +40,31 @@ public class VelocityMotor {
         deltaTimer.reset();
     }
 
-    public void setVelController(PIDFController controller) {
-        velController = controller;
-    }
-
-    public double getVelocity() {
-        return currentVelocity;
-    }
-
-    public double getPower() {
-        return currentPower;
-    }
-
     public void setTargetVelocity(double vel) {
+        isStopped = false;
         targetVelocity = vel;
         velController.setTargetVelocity(vel);
-        isStopped = false;
     }
 
     public boolean isAtTargetVelocity() {
-        return Math.abs(targetVelocity - currentVelocity) < maxBoundsForTarget && Math.abs(currentAcceleration) < maxAccelForTarget ;
+        if (velocityFilter.isDataless() || accelerationFilter.isDataless()) return false;
+        return Math.abs(targetVelocity - velocityFilter.getPos()) < maxBoundsForTarget && Math.abs(accelerationFilter.getPos()) < maxAccelForTarget ;
     }
 
     public void update() {
         double dt = deltaTimer.milliseconds();
         deltaTimer.reset();
 
-        double lastVelocity = currentVelocity;
-        double rawCurrentVelocity = (lastPos-motor.getCurrentPosition()) / dt;
-        velocities.add(rawCurrentVelocity);
-        if (velocities.size() > 30) velocities.remove(0);
-        currentVelocity = 0;
-        for (int i = 0; i < velocities.size(); i++) {
-            currentVelocity += velocities.get(i);
-        }
-        currentVelocity /= velocities.size();
-        currentVelocity = clip(currentVelocity, -maxVelocity, maxVelocity);
-
-        double rawAcceleration = (currentVelocity - lastVelocity) / dt;
-        accelerations.add(rawAcceleration);
-        if (accelerations.size() > 30) accelerations.remove(0);
-        currentAcceleration = 0;
-        for (int i = 0; i < accelerations.size(); i++) {
-            currentAcceleration += accelerations.get(i);
-        }
-        currentAcceleration /= accelerations.size();
-        currentAcceleration = clip(currentAcceleration, -maxAcceleration, maxAcceleration);
-
+        double lastVelocity = velocityFilter.getPos();
+        velocityFilter.update((motor.getCurrentPosition()-lastPos) / dt);
         lastPos = motor.getCurrentPosition();
 
-        if (!isStopped) {
-            if (hasBeenStopped) {
-                velController.reset();
-                hasBeenStopped = false;
-            }
+        accelerationFilter.update((velocityFilter.getPos() - lastVelocity) / dt);
+        velController.update(targetVelocity - velocityFilter.getPos(), dt);
 
-            currentPower = velController.update(targetVelocity - currentVelocity, dt);
+        if (!isStopped && !velocityFilter.isDataless() && !accelerationFilter.isDataless()) {
+            currentPower = velController.getOut();
 
-            // THIS DOES NOT WORK NORMALLY. THE MIN POWER CAPS AT 0 NOT -maxPower
             currentPower = clip(currentPower, -maxPower, maxPower);
             if (Math.abs(currentPower) > 0.01)
                 motor.setPower(currentPower);
@@ -143,8 +76,29 @@ public class VelocityMotor {
 
     public void stop() {
         isStopped = true;
-        hasBeenStopped = true;
+        velocityFilter.reset();
+        accelerationFilter.reset();
         velController.reset();
+    }
+
+    public double getTargetVelocity() {
+        return targetVelocity;
+    }
+
+    public double getCurrentAcceleration() {
+        return accelerationFilter.getPos();
+    }
+
+    public void setVelController(PIDFController controller) {
+        velController = controller;
+    }
+
+    public double getVelocity() {
+        return velocityFilter.getPos();
+    }
+
+    public double getPower() {
+        return currentPower;
     }
 
     public void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior zeroPowerBehavior) {

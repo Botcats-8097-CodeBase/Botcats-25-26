@@ -48,10 +48,10 @@ public class TurretTest extends OpMode {
         }
 
         telemetry.addData("turret Target Vel", targetSpeed);
-        telemetry.addData("turret Current Vel", turret.spinnerMotor.getVelocity());
-        telemetry.addData("turret Current Accel", turret.spinnerMotor.getCurrentAcceleration());
-        telemetry.addData("turret Current Pwr", turret.spinnerMotor.getPower());
-        telemetry.addData("turret is stopped", turret.spinnerMotor.isStopped());
+        telemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
+        telemetry.addData("turret Current Accel", turret.spinnerMotor1.getCurrentAcceleration());
+        telemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
+//        telemetry.addData("turret is stopped", turret.spinnerMotor1.isStopped());
 
         telemetry.addData("targetTurretAngle", targetTurretAngle);
         turret.faceTo(targetTurretAngle);

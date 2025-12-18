@@ -2,8 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.util.Range.clip;
 
-import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
 
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -29,6 +31,8 @@ public class TeleOpFull extends OpMode {
 
     List<LynxModule> allHubs;
 
+    TelemetryManager.TelemetryWrapper pTelemetry = PanelsTelemetry.INSTANCE.getFtcTelemetry();
+
     BasicRobot robot = new BasicRobot();
     Intake intake = new Intake();
     Turret turret = new Turret();
@@ -45,10 +49,6 @@ public class TeleOpFull extends OpMode {
     boolean isConstantPreset = false;
 
     double yawOffset = 90;
-
-    double adjustAngle = 0;
-    double filteredTx = 0;
-    double lastVisionTarget = 0;
 
     int id;
 
@@ -69,10 +69,7 @@ public class TeleOpFull extends OpMode {
 
     double[] preset = RobotConstants.fullSpeedPreset;
 
-    @Override
-    public void init() {
-        initRobot();
-    }
+
 
     @Override
     public void start() {
@@ -80,9 +77,6 @@ public class TeleOpFull extends OpMode {
         et.reset();
 
         odo.init(hardwareMap, initPose);
-//        if (isBlackBoardPos && blackboard.get("yawEncoder") != null) {
-//            RobotConstants.yawTurretStartEncoder = (int) blackboard.get("yawEncoder");
-//        }
     }
 
     @Override
@@ -90,33 +84,24 @@ public class TeleOpFull extends OpMode {
         float dt = (float) et.milliseconds();
         et.reset();
 
-        for (LynxModule hub : allHubs) {
-            hub.clearBulkCache();
-        }
+        for (LynxModule hub : allHubs) hub.clearBulkCache();
 
         // reset IMU
         if (gamepad1.y) {
             imu.resetYaw();
             imu.initialize(parameters);
-//            odo.driver.recalibrateIMU();
         }
-
-
 
         YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
         double yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
-//        double yaw = odo.driver.getHeading(AngleUnit.DEGREES);//robotOrientation.getYaw(AngleUnit.DEGREES);
-        telemetry.addData("Yaw", yaw);
+        pTelemetry.addData("Yaw", yaw);
 
         // pressurising the right trigger slows down the drive train
         double coefficient = 0.35;
-        if(gamepad1.right_trigger < 0.5)
-        {
-            telemetry.addData("Speed Mode", "off");
-        }
+        if(gamepad1.right_trigger < 0.5) pTelemetry.addData("Speed Mode", "off");
         else
         {
-            telemetry.addData("Speed Mode", "on");
+            pTelemetry.addData("Speed Mode", "on");
             coefficient = 1;
         }
 
@@ -125,52 +110,36 @@ public class TeleOpFull extends OpMode {
                         .rotateVector(-Math.toRadians(yaw-yawOffset))
                 , gamepad1.right_stick_x, coefficient);
 
-        if (gamepad1.right_bumper || gamepad2.right_bumper) {
-            intake.trigger();
-        } else if (gamepad1.left_bumper || gamepad2.left_bumper) {
-            intake.reverseTrigger();
-        } else {
-            intake.stop();
-        }
+        if (gamepad1.right_bumper || gamepad2.right_bumper) intake.trigger();
+        else if (gamepad1.left_bumper || gamepad2.left_bumper) intake.reverseTrigger();
+        else intake.stop();
 
-        if (gamepad2.a) {
-            preset = RobotConstants.fullSpeedPreset;
-        }
-        if (gamepad2.b) {
-            preset = RobotConstants.closestSpeedPreset;
-        }
+        if (gamepad2.a) preset = RobotConstants.fullSpeedPreset;
+        if (gamepad2.b) preset = RobotConstants.closestSpeedPreset;
 
-        if (gamepad1.backWasPressed()) {
-            isAutoAiming = !isAutoAiming;
-        }
-        telemetry.addData("is auto aiming", isAutoAiming);
+        if (gamepad1.backWasPressed()) isAutoAiming = !isAutoAiming;
 
-        if (gamepad1.dpadLeftWasPressed()) {
-            isConstantPreset = !isConstantPreset;
-        }
-        if (gamepad1.a) {
-            turret.continueShootSequence(preset);
-        } else if (isConstantPreset) {
-            turret.goToPreset(preset);
-        } else {
-            turret.stopShootSequence();
-        }
-        telemetry.addData("turret Vel", turret.spinnerMotor.getVelocity());
-        telemetry.addData("turret Pwr", turret.spinnerMotor.getPower());
-//        telemetry.addData("turret Yaw Current", turret.yawTurretMotor.getCurrentPower());
+        pTelemetry.addData("is auto aiming", isAutoAiming);
+
+        if (gamepad1.dpadLeftWasPressed()) isConstantPreset = !isConstantPreset;
+
+        if (gamepad1.a) turret.continueShootSequence(preset);
+        else if (isConstantPreset) turret.goToPreset(preset);
+        else turret.stopShootSequence();
+
+        pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
+        pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
 
         odo.update();
         Pose2D robotPos = odo.getPose();
 
-        if (!isAutoAiming) {
-            if (gamepad1.dpad_down) {
-                targetTurretAngle -= 1;
-            }
-            if (gamepad1.dpad_up) {
-                targetTurretAngle += 1;
-            }
 
-            telemetry.addData("targetTurretAngle", targetTurretAngle);
+
+        if (!isAutoAiming) {
+            if (gamepad1.dpad_down) targetTurretAngle -= 1;
+            if (gamepad1.dpad_up) targetTurretAngle += 1;
+
+            pTelemetry.addData("targetTurretAngle", targetTurretAngle);
 
             turret.faceTo(targetTurretAngle);
 
@@ -178,82 +147,53 @@ public class TeleOpFull extends OpMode {
                 targetTurretAngle = 0;
                 isAutoAiming = true;
             }
+
         } else {
-            if (gamepad1.dpad_down) {
-                adjustAngle -= 1;
-            }
-            if (gamepad1.dpad_up) {
-                adjustAngle += 1;
-            }
+            if (gamepad1.dpad_down) RobotConstants.yawTurretStartEncoder += 1;
+            if (gamepad1.dpad_up) RobotConstants.yawTurretStartEncoder -= 1;
 
-            telemetry.addData("turret Target Vel", preset[0]);
-            telemetry.addData("turret Current Vel", turret.spinnerMotor.getVelocity());
-            telemetry.addData("turret Current Pwr", turret.spinnerMotor.getPower());
-            telemetry.addData("turret is stopped", turret.spinnerMotor.isStopped());
-            telemetry.addData("adjust Angle", adjustAngle);
+            double facingTarget = autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw);
+            facingTarget = limelight.limeAutoFacing(facingTarget, id);
+            facingTarget = TylerMath.normalize180(facingTarget);
+            facingTarget = clip(facingTarget, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
+            turret.faceTo(facingTarget);
 
-
-            double targ2 = autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw);
-
-
-
-//            if (Double.isNaN(tx)) {
-//                turret.faceTo(0);
-//            }
-
-
-            double tx = limelight.limeScanPosX(id);
-            telemetry.addData("tx", tx);
-            if (!Double.isNaN(tx)) {
-
-                double alpha = 0.3;
-                filteredTx = filteredTx + alpha * (tx - filteredTx);
-
-                double turretAngle = turret.getCurrentFacing();
-                double kVision = 1.0;
-
-                double newAngle = normalize180(turretAngle + kVision * filteredTx);
-                newAngle = clip(newAngle, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
-
-                lastVisionTarget = newAngle;
-                turret.faceTo(newAngle);
-                telemetry.addData("targeting", newAngle);
-            }
-            else {
-                turret.faceTo(targ2); //turret.faceTo(targ2 + adjustAngle);
-            }
-            telemetry.addData("targ2", targ2);
+            pTelemetry.addData("turret Target Vel", preset[0]);
+            pTelemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
+            pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
+            pTelemetry.addData("facingTarget", facingTarget);
         }
 
-        telemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
-        telemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
+        pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
+        pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
 
         turret.loop();
 
-        telemetry.update();
+        pTelemetry.update();
 
     }
-
 
     public double autoFace(double x, double y, double yaw) {
-        double gx;
-        double gy;
-        if (isRed) {
-            gx = -72;
-            gy = 72;
-        } else {
-            gx = -72;
-            gy = -72;
-        }
-        double out = ((-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180) % 360 + 360) % 360;
-
-        // Bounds 0~360 to -180~180
-        if (out > 180) out -= 360;
-
-        return out;
+        return 0;
+//        double gx;
+//        double gy;
+//        if (isRed) {
+//            gx = -72;
+//            gy = 72;
+//        } else {
+//            gx = -72;
+//            gy = -72;
+//        }
+//        double out = TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, 0, 360);
+//
+//        // Bounds 0~360 to -180~180
+//        if (out > 180) out -= 360;
+//
+//        return out;
     }
 
-    void initRobot() {
+    @Override
+    public void init() {
         allHubs = hardwareMap.getAll(LynxModule.class);
 
         for (LynxModule hub : allHubs) {
@@ -275,16 +215,14 @@ public class TeleOpFull extends OpMode {
     public void init_loop() {
         int colorNum = isRed ? 1 : 0;
         id = isRed ? 24 : 20;
-        telemetry.addData("team", color[colorNum]);
-        telemetry.addData("is close", isClose);
-        telemetry.addData("is black board pos", isBlackBoardPos);
-        telemetry.addData("x", blackboard.get("x"));
-        telemetry.addData("y", blackboard.get("y"));
+        pTelemetry.addData("team", color[colorNum]);
+        pTelemetry.addData("is close", isClose);
+        pTelemetry.addData("is black board pos", isBlackBoardPos);
+        pTelemetry.addData("x", blackboard.get("x"));
+        pTelemetry.addData("y", blackboard.get("y"));
+        pTelemetry.addData("angle", turret.yawTurretEncoder.getAngle180to180());
 
-        //telemetry.addData("motor", turret.yawTurretMotor.getCurrentPosition());
-        telemetry.addData("angle", turret.yawTurretEncoder.getAngle180to180());
-
-        telemetry.update();
+        pTelemetry.update();
 
         if (gamepad1.aWasPressed()) isRed = !isRed;
         if (gamepad1.bWasPressed()) isClose = !isClose;

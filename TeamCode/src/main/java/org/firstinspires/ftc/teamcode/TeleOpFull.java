@@ -37,7 +37,6 @@ public class TeleOpFull extends OpMode {
     Intake intake = new Intake();
     Turret turret = new Turret();
     Limelight limelight = new Limelight();
-
     Odometry odo = new Odometry();
 
     boolean isRed = false;
@@ -152,7 +151,7 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_down) RobotConstants.yawTurretStartEncoder += 1;
             if (gamepad1.dpad_up) RobotConstants.yawTurretStartEncoder -= 1;
 
-            double facingTarget = autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw);
+            double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw);
             facingTarget = limelight.limeAutoFacing(facingTarget, id);
             facingTarget = TylerMath.normalize180(facingTarget);
             facingTarget = clip(facingTarget, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
@@ -171,25 +170,6 @@ public class TeleOpFull extends OpMode {
 
         pTelemetry.update();
 
-    }
-
-    public double autoFace(double x, double y, double yaw) {
-        return 0;
-//        double gx;
-//        double gy;
-//        if (isRed) {
-//            gx = -72;
-//            gy = 72;
-//        } else {
-//            gx = -72;
-//            gy = -72;
-//        }
-//        double out = TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, 0, 360);
-//
-//        // Bounds 0~360 to -180~180
-//        if (out > 180) out -= 360;
-//
-//        return out;
     }
 
     @Override

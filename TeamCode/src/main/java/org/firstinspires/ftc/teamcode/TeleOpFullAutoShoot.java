@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.util.Range.clip;
 
-import org.firstinspires.ftc.teamcode.utils.TylerMath;
-
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -22,12 +20,13 @@ import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
 import org.firstinspires.ftc.teamcode.subcomponents.Odometry;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
 import org.firstinspires.ftc.teamcode.utils.BasicRobot;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
 import org.firstinspires.ftc.teamcode.utils.Vector2D;
 
 import java.util.List;
 
-@TeleOp(name = "!teleopfull")
-public class TeleOpFull extends OpMode {
+@TeleOp(name = "!teleopfull auto shoot")
+public class TeleOpFullAutoShoot extends OpMode {
 
     List<LynxModule> allHubs;
 

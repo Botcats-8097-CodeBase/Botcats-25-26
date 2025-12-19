@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -13,6 +15,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.utils.BasicRobot;
@@ -21,13 +26,12 @@ import java.util.List;
 
 @Autonomous(name = "move forward")
 public class MoveForward extends OpMode {
+    TelemetryManager.TelemetryWrapper pTelemetry = PanelsTelemetry.INSTANCE.getFtcTelemetry();
 
-    List<LynxModule> allHubs;
-
-    BasicRobot robot = new BasicRobot();
-
-    public IMU imu;
-    public double finalAngle;
+    int id;
+    boolean isRed = false;
+    boolean isClose = true;
+    String[] color = {"blue", "red"};
 
     ElapsedTime et = new ElapsedTime();
 
@@ -42,11 +46,27 @@ public class MoveForward extends OpMode {
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
 
-    private final Pose startPose = new Pose(28.5, 128, Math.toRadians(90));
-    private final Pose scorePose = new Pose(63, 45, Math.toRadians(90));
+    private Pose startPose, scorePose;
     private Path scorePreload;
     private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3;
     public void buildPaths() {
+        if (!isRed) {
+            if (isClose) {
+                startPose = AutoConstants.blueCloseStartPos;
+                scorePose = new Pose(63.5, 40, 90);
+            } else {
+                startPose = AutoConstants.blueFarStartPos;
+                scorePose = new Pose(63.5, 57, 90);
+            }
+        } else {
+            if (isClose) {
+                startPose = AutoConstants.redCloseStartPos;
+                scorePose = new Pose(80.5, 40, 90);
+            } else {
+                startPose = AutoConstants.redFarStartPos;
+                scorePose = new Pose(80.5, 57, 90);
+            }
+        }
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
         scorePreload = new Path(new BezierLine(startPose, scorePose));
 //        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
@@ -59,7 +79,6 @@ public class MoveForward extends OpMode {
                 setPathState(1);
                 break;
             case 1:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 if(!follower.isBusy()) {
                     setPathState(2);
                     actionTimer.resetTimer();
@@ -74,21 +93,18 @@ public class MoveForward extends OpMode {
                 break;
         }
     }
-    /** These change the states of the paths and actions. It will also reset the timers of the individual switches **/
+
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
     }
 
-    /** This is the main loop of the OpMode, it will run repeatedly after clicking "Play". **/
     @Override
     public void loop() {
 
-        // These loop the movements of the robot, these must be called continuously in order to work
         follower.update();
         autonomousPathUpdate();
 
-        // Feedback to Driver Hub for debugging
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
@@ -96,7 +112,6 @@ public class MoveForward extends OpMode {
         telemetry.update();
     }
 
-    /** This method is called once at the init of the OpMode. **/
     @Override
     public void init() {
         pathTimer = new Timer();
@@ -109,19 +124,25 @@ public class MoveForward extends OpMode {
         follower.setStartingPose(startPose);
     }
 
-    /** This method is called continuously after Init while waiting for "play". **/
     @Override
-    public void init_loop() {}
+    public void init_loop() {
+        int colorNum = isRed ? 1 : 0;
+        id = isRed ? 24 : 20;
+        pTelemetry.addData("team", color[colorNum]);
+        pTelemetry.addData("is close", isClose);
 
-    /** This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system **/
+        pTelemetry.update();
+
+        if (gamepad1.aWasPressed()) isRed = !isRed;
+        if (gamepad1.bWasPressed()) isClose = !isClose;
+    }
+
     @Override
     public void start() {
         opmodeTimer.resetTimer();
         setPathState(0);
     }
 
-    /** We do not use this because everything should automatically disable **/
     @Override
     public void stop() {}
 }

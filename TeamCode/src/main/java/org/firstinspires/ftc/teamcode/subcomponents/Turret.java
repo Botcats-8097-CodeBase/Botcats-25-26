@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
 import org.firstinspires.ftc.teamcode.utils.RunToMotor;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
 import org.firstinspires.ftc.teamcode.utils.VelocityMotor;
 
 public class Turret {
@@ -114,23 +115,19 @@ public class Turret {
         }
     }
 
-    public double autoFace(double x, double y, double yaw) {
-        return 0;
-//        double gx;
-//        double gy;
-//        if (isRed) {
-//            gx = -72;
-//            gy = 72;
-//        } else {
-//            gx = -72;
-//            gy = -72;
-//        }
-//        double out = TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, 0, 360);
-//
-//        // Bounds 0~360 to -180~180
-//        if (out > 180) out -= 360;
-//
-//        return out;
+    public double autoFace(double x, double y, double yaw, boolean isRed) {
+        double gx;
+        double gy;
+        if (isRed) {
+            gx = -72;
+            gy = 72;
+        } else {
+            gx = -72;
+            gy = -72;
+        }
+        double out = TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
+
+        return out;
     }
 
     public void setShootPreset(double[] preset) {

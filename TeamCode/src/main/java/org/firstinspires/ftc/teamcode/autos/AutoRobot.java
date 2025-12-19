@@ -27,8 +27,8 @@ public class AutoRobot {
         turret.loop();
     }
 
-    public void faceTarget(Pose pose) {
-        turret.autoFace(pose.getX() - 72, pose.getY() - 72, pose.getHeading() - 90);
+    public void faceTarget(Pose pose, boolean isRed) {
+        turret.autoFace(pose.getX() - 72, pose.getY() - 72, pose.getHeading() - 90, isRed);
     }
 
     public void shootSequenceStart(double[] preset) {

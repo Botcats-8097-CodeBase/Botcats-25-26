@@ -22,8 +22,8 @@ public class RobotConstants {
 
     public static String yawTurretMotorName = "yawTurret";
     public static double yawTurretStartAngle = 311.0;
-    public static double yawTurretMaxAngle = 240;
-    public static double yawTurretMinAngle = -80;
+    public static double yawTurretMaxAngle = 210;
+    public static double yawTurretMinAngle = -45;
 
     public static String yawTurretEncoderName = "yawTurretEncoder";
 

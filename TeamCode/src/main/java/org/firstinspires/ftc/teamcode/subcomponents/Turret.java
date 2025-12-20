@@ -69,7 +69,12 @@ public class Turret {
         double dt = yawTimer.seconds();
         yawTimer.reset();
 
-        yawMotor.update(yawTurretEncoder.getAngle180to180());
+        //TODO: Make this better in the future
+        double inputYaw = yawTurretEncoder.getAngle180to180();
+        if (inputYaw < -50) {
+            inputYaw += 360;
+        }
+        yawMotor.update(inputYaw);
 
         spinnerMotor1.update();
         spinnerMotor2.setPower(spinnerMotor1.getPower());
@@ -95,6 +100,7 @@ public class Turret {
     }
 
     public void faceTo(double yaw) {
+        yawMotor.getCurrentPosition();
         yawMotor.setTargetPosition(yaw);
     }
 
@@ -125,7 +131,7 @@ public class Turret {
             gx = -72;
             gy = -72;
         }
-        double out = TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
+        double out =  TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
 
         return out;
     }

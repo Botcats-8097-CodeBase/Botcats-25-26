@@ -41,6 +41,7 @@ public class Limelight {
             double newAngle = normalize180(currentFacing + kVision * filteredTx);
             newAngle = clip(newAngle, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
 
+
             return newAngle;
         }
         else {

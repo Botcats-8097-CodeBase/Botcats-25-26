@@ -153,7 +153,7 @@ public class TeleOpFull extends OpMode {
 
             double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw, isRed);
             facingTarget = limelight.limeAutoFacing(facingTarget, id);
-            facingTarget = TylerMath.normalize180(facingTarget);
+//            facingTarget = TylerMath.normalize180(facingTarget);
             facingTarget = clip(facingTarget, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
             turret.faceTo(facingTarget);
 

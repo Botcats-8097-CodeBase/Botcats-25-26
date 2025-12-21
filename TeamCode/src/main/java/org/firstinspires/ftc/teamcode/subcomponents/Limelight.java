@@ -30,8 +30,8 @@ public class Limelight {
     }
 
 
-    public double limeAutoFacing(double currentFacing, int id) {
-        double tx = limeScanPosX(id);
+    public Double limeAutoFacing(double currentFacing, int id) {
+        double tx = -limeScanPosX(id);
         if (!Double.isNaN(tx)) {
             double alpha = 0.3;
             filteredTx = filteredTx + alpha * (tx - filteredTx);
@@ -45,7 +45,7 @@ public class Limelight {
             return newAngle;
         }
         else {
-            return currentFacing;
+            return null;
         }
     }
 

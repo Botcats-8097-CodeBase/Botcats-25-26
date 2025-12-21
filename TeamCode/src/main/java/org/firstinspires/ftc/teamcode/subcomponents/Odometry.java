@@ -14,11 +14,9 @@ public class Odometry {
     public GoBildaPinpointDriver.EncoderDirection initialParDirection;
     public GoBildaPinpointDriver.EncoderDirection initialPerpDirection;
 
-    private Pose2D txWorldPinpoint;
-
     public Odometry() {}
 
-    public void init(HardwareMap hardwareMap, Pose2D initialPose) {
+    public void init(HardwareMap hardwareMap) {
         // TODO: make sure your config has a Pinpoint device with this name
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         driver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -34,8 +32,6 @@ public class Odometry {
         driver.setEncoderDirections(initialParDirection, initialPerpDirection);
 
         driver.resetPosAndIMU();
-
-        txWorldPinpoint = initialPose;
     }
 
     public void setPose(Pose2D pose) {

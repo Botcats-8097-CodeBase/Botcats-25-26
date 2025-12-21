@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.autos;
 
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -15,10 +14,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "move forward")
-public class MoveForward extends OpMode {
+@Autonomous(name = "move forward shoot 3")
+public class MoveForwardShoot3 extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     int id;
@@ -35,34 +35,53 @@ public class MoveForward extends OpMode {
             )
     );
 
+    AutoRobot robot = new AutoRobot();
+
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
 
-    private Pose startPose, scorePose;
+    private Pose startPose, scorePose, parkPose;
     private Path scorePreload;
-    private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3, scorePickup3;
+    private PathChain parkPath, shakePath, grabPickup2, scorePickup2, grabPickup3, scorePickup3;
     public void buildPaths() {
         if (!isRed) {
             if (isClose) {
                 startPose = AutoConstants.blueCloseStartPos;
-                scorePose = new Pose(63.5, 40, Math.toRadians(90));
+                scorePose = new Pose(63.5, 12, Math.toRadians(90));
+                parkPose = new Pose(63.5, 40, Math.toRadians(90));
             } else {
                 startPose = AutoConstants.blueFarStartPos;
-                scorePose = new Pose(63.5, 57, Math.toRadians(90));
+                scorePose = new Pose(63.5, 132, Math.toRadians(90));
+                parkPose = new Pose(63.5, 57, Math.toRadians(90));
             }
         } else {
             if (isClose) {
                 startPose = AutoConstants.redCloseStartPos;
-                scorePose = new Pose(80.5, 40, Math.toRadians(90));
+                scorePose = new Pose(80.5, 12, Math.toRadians(90));
+                parkPose = new Pose(80.5, 40, Math.toRadians(90));
             } else {
                 startPose = AutoConstants.redFarStartPos;
-                scorePose = new Pose(80.5, 57, Math.toRadians(90));
+                scorePose = new Pose(80.5, 132, Math.toRadians(90));
+                parkPose = new Pose(80.5, 57, Math.toRadians(90));
             }
         }
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
+
+        parkPath = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, parkPose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
+                .build();
+
+        shakePath = follower.pathBuilder()
+                .setBrakingStrength(0.1)
+                .addPath(new BezierLine(scorePose, scorePose.plus(new Pose(0, 5, 0))))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), scorePose.getHeading())
+                .addPath(new BezierLine(scorePose.plus(new Pose(0, 5, 0)), scorePose))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), scorePose.getHeading())
+                .build();
     }
 
     public void autonomousPathUpdate() {
@@ -73,16 +92,52 @@ public class MoveForward extends OpMode {
                 break;
             case 1:
                 if(!follower.isBusy()) {
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
                     setPathState(2);
-                    actionTimer.resetTimer();
                 }
                 break;
             case 2:
-                if (actionTimer.getElapsedTime() > 1000) {
-                    blackboard.put("x", -follower.getPose().getY() + 72);
-                    blackboard.put("y", -follower.getPose().getX() + 72);
-                    blackboard.put("heading", Math.toDegrees(follower.getPose().getHeading()) + 90);
-                    telemetry.addData("Done", true);
+                if (!robot.isShooting()) {
+                    robot.intake.trigger();
+                    actionTimer.resetTimer();
+                    setPathState(3);
+                }
+                break;
+            case 3:
+                if (actionTimer.getElapsedTime() > 2000) {
+                    robot.intake.stop();
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
+                    setPathState(4);
+                }
+            case 4:
+                if (!robot.isShooting()) {
+                    actionTimer.resetTimer();
+                    follower.followPath(shakePath);
+                    setPathState(5);
+                }
+                break;
+            case 5:
+                if (follower.isBusy()) {
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
+                    robot.intake.stop();
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
+                    actionTimer.resetTimer();
+                    setPathState(6);
+                }
+            case 6:
+                if (!robot.isShooting() && actionTimer.getElapsedTime() > 2000) {
+                    follower.followPath(parkPath);
+                    setPathState(7);
+                }
+                break;
+            case 7:
+                if(!follower.isBusy()) {
+                    actionTimer.resetTimer();
                 }
                 break;
         }
@@ -102,6 +157,8 @@ public class MoveForward extends OpMode {
 
         telemetry.addData("path state", pathState);
         telemetry.update();
+
+        robot.update();
     }
 
     @Override
@@ -111,7 +168,7 @@ public class MoveForward extends OpMode {
         actionTimer = new Timer();
         opmodeTimer.resetTimer();
 
-
+        robot.init(hardwareMap, isRed);
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);
@@ -137,5 +194,9 @@ public class MoveForward extends OpMode {
     }
 
     @Override
-    public void stop() {}
+    public void stop() {
+        blackboard.put("x", -follower.getPose().getY() + 72);
+        blackboard.put("y", -follower.getPose().getX() + 72);
+        blackboard.put("heading", Math.toDegrees(follower.getPose().getHeading()) + 90);
+    }
 }

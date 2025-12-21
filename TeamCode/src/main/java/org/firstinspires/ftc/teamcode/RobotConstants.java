@@ -21,9 +21,9 @@ public class RobotConstants {
     public static double intakeMotorPower = 0.7;
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartAngle = 311.0;
-    public static double yawTurretMaxAngle = 210;
-    public static double yawTurretMinAngle = -45;
+    public static double yawTurretStartAngle = 202+114.142578125;
+    public static double yawTurretMaxAngle = 80;
+    public static double yawTurretMinAngle = -40;
 
     public static String yawTurretEncoderName = "yawTurretEncoder";
 
@@ -40,7 +40,7 @@ public class RobotConstants {
 
 
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
-    public static double[] fullSpeedPreset = {1.75, 0.30};
-    public static double[] closestSpeedPreset = {1.2, 0.70};
+    public static double[] fullSpeedPreset = {2.0, 0.30};
+    public static double[] closestSpeedPreset = {1.30, 0.70};
 
 }

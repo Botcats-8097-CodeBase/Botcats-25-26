@@ -4,8 +4,10 @@ import static com.qualcomm.robotcore.util.Range.clip;
 
 import org.firstinspires.ftc.teamcode.utils.TylerMath;
 
+import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -31,7 +33,7 @@ public class TeleOpFull extends OpMode {
 
     List<LynxModule> allHubs;
 
-    TelemetryManager.TelemetryWrapper pTelemetry = PanelsTelemetry.INSTANCE.getFtcTelemetry();
+    JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     BasicRobot robot = new BasicRobot();
     Intake intake = new Intake();
@@ -57,7 +59,7 @@ public class TeleOpFull extends OpMode {
 
     ElapsedTime et = new ElapsedTime();
 
-    Pose2D initPose = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
+    Pose2D initPose = new Pose2D(DistanceUnit.INCH, 20, 0, AngleUnit.DEGREES, 0);
 
     IMU.Parameters parameters = new IMU.Parameters(
             new RevHubOrientationOnRobot(
@@ -75,8 +77,30 @@ public class TeleOpFull extends OpMode {
         super.start();
         et.reset();
 
-        odo.init(hardwareMap, initPose);
+        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
+            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, (double) blackboard.get("heading"));
+        } else {
+            if (!isRed) {
+                if (isClose) {
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
+                } else {
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
+                }
+                yawOffset = 90;
+            } else {
+                if (isClose) {
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
+                } else {
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
+                }
+                yawOffset = -90;
+            }
+        }
+
+        odo.setPose(initPose);
     }
+
+    double lastTimeSeenLimelight = 0;
 
     @Override
     public void loop() {
@@ -132,8 +156,6 @@ public class TeleOpFull extends OpMode {
         odo.update();
         Pose2D robotPos = odo.getPose();
 
-
-
         if (!isAutoAiming) {
             if (gamepad1.dpad_down) targetTurretAngle -= 1;
             if (gamepad1.dpad_up) targetTurretAngle += 1;
@@ -152,15 +174,31 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_up) RobotConstants.yawTurretStartAngle -= 1;
 
             double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw, isRed);
-            facingTarget = limelight.limeAutoFacing(facingTarget, id);
-//            facingTarget = TylerMath.normalize180(facingTarget);
-            facingTarget = clip(facingTarget, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
-            turret.faceTo(facingTarget);
+            Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
+            telemetry.addData("limeFacingTarget", limeFacingTarget);
+            if (limeFacingTarget == null) {
+                if ((getRuntime() - lastTimeSeenLimelight) > 0.8) turret.faceTo(facingTarget);
+            } else {
+                if (robotPos.getX(DistanceUnit.INCH) > 40) {
+                    double limeOffsetFar = 1.5;
+                    telemetry.addData("usingLimeOffset", true);
+                    if (isRed) {
+                        limeFacingTarget += limeOffsetFar;
+                    } else {
+                        limeFacingTarget -= limeOffsetFar;
+                    }
+                }
+                lastTimeSeenLimelight = getRuntime();
+                turret.faceTo(limeFacingTarget);
+            }
+
 
             pTelemetry.addData("turret Target Vel", preset[0]);
             pTelemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
             pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
-            pTelemetry.addData("facingTarget", facingTarget);
+            pTelemetry.addData("facing", facingTarget);
+            pTelemetry.addData("facing Current", turret.yawMotor.getCurrentPosition());
+            pTelemetry.addData("facing Target", turret.yawMotor.getTargetPosition());
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
@@ -184,6 +222,7 @@ public class TeleOpFull extends OpMode {
         intake.init(hardwareMap);
         turret.init(hardwareMap);
         limelight.init(hardwareMap);
+        odo.init(hardwareMap);
 
 
         imu = hardwareMap.get(IMU.class, "imu");
@@ -200,6 +239,7 @@ public class TeleOpFull extends OpMode {
         pTelemetry.addData("is black board pos", isBlackBoardPos);
         pTelemetry.addData("x", blackboard.get("x"));
         pTelemetry.addData("y", blackboard.get("y"));
+        pTelemetry.addData("heading", blackboard.get("heading"));
         pTelemetry.addData("angle", turret.yawTurretEncoder.getAngle180to180());
 
         pTelemetry.update();
@@ -213,24 +253,6 @@ public class TeleOpFull extends OpMode {
             turret.yawTurretEncoder.zeroHere();
         }
 
-        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null) {
-            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, 180);
-        } else {
-            if (!isRed) {
-                if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
-                } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
-                }
-                yawOffset = 90;
-            } else {
-                if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
-                } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
-                }
-                yawOffset = -90;
-            }
-        }
+
     }
 }

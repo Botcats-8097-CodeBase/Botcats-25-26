@@ -55,7 +55,7 @@ public class RunToMotor {
     }
 
     public double getCurrentPosition() {
-        return motor.getCurrentPosition();
+        return currentPos;
     }
 
     public void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior zeroPowerBehavior) {

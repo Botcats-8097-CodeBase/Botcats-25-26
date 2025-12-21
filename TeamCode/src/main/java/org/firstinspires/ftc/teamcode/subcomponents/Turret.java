@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subcomponents;
 
+import static com.qualcomm.robotcore.util.Range.clip;
 import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,6 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.utils.NoiseFilter;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
 import org.firstinspires.ftc.teamcode.utils.RunToMotor;
@@ -35,8 +37,8 @@ public class Turret {
     public void init(HardwareMap hardwareMap) {
         yawMotor.init(hardwareMap, RobotConstants.yawTurretMotorName);
         yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        yawMotor.setTargetPosition(100);
-        yawMotor.setPosController(new PIDController(0.015, 0, 0.0005, 0));
+        yawMotor.setTargetPosition(0);
+        yawMotor.setPosController(new PIDController(0.015, 0.0002, 0, 100));
         yawMotor.setMaxPower(0.4);
 
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
@@ -44,7 +46,7 @@ public class Turret {
         spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         spinnerMotor1.setMaxPower(1);
         spinnerMotor1.setMaxBoundsForTarget(0.01);
-        spinnerMotor1.setVelController(new PIDFController(1.2, 0.002, 0, 0.420, 100));
+        spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
 
         spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
         spinnerMotor2.setDirection(RobotConstants.spinnerMotor2Direction);
@@ -70,9 +72,9 @@ public class Turret {
         yawTimer.reset();
 
         //TODO: Make this better in the future
-        double inputYaw = yawTurretEncoder.getAngle180to180();
-        if (inputYaw < -50) {
-            inputYaw += 360;
+        double inputYaw = yawTurretEncoder.getAngle0to360();
+        if (inputYaw > 270) {
+            inputYaw -= 360;
         }
         yawMotor.update(inputYaw);
 
@@ -100,7 +102,10 @@ public class Turret {
     }
 
     public void faceTo(double yaw) {
-        yawMotor.getCurrentPosition();
+        yaw = TylerMath.wrap(yaw, 0, 360);
+        if (yaw > 270) yaw -= 360;
+        yaw = clip(yaw, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
+
         yawMotor.setTargetPosition(yaw);
     }
 
@@ -131,6 +136,7 @@ public class Turret {
             gx = -72;
             gy = -72;
         }
+
         double out =  TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
 
         return out;
@@ -155,7 +161,7 @@ public class Turret {
     }
 
     public double getCurrentFacing() {
-        return yawTurretEncoder.getAngle180to180();
+        return yawMotor.getCurrentPosition();
     }
 
     private Double lastAngle0to360 = null;

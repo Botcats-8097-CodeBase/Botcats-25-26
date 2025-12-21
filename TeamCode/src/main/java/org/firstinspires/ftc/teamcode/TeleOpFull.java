@@ -86,15 +86,20 @@ public class TeleOpFull extends OpMode {
                 } else {
                     initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
                 }
-                yawOffset = 90;
+
             } else {
                 if (isClose) {
                     initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
                 } else {
                     initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
                 }
-                yawOffset = -90;
+
             }
+        }
+        if (!isRed) {
+            yawOffset = 90;
+        } else {
+            yawOffset = -90;
         }
 
         odo.setPose(initPose);
@@ -137,8 +142,7 @@ public class TeleOpFull extends OpMode {
         else if (gamepad1.left_bumper || gamepad2.left_bumper) intake.reverseTrigger();
         else intake.stop();
 
-        if (gamepad2.a) preset = RobotConstants.fullSpeedPreset;
-        if (gamepad2.b) preset = RobotConstants.closestSpeedPreset;
+
 
         if (gamepad1.backWasPressed()) isAutoAiming = !isAutoAiming;
 
@@ -155,6 +159,11 @@ public class TeleOpFull extends OpMode {
 
         odo.update();
         Pose2D robotPos = odo.getPose();
+
+//        if (gamepad2.a) preset = RobotConstants.fullSpeedPreset;
+//        if (gamepad2.b) preset = RobotConstants.closestSpeedPreset;
+        if (robotPos.getX(DistanceUnit.INCH) > 40) preset = RobotConstants.fullSpeedPreset;
+        else preset = RobotConstants.closestSpeedPreset;
 
         if (!isAutoAiming) {
             if (gamepad1.dpad_down) targetTurretAngle -= 1;

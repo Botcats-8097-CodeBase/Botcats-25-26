@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 @Autonomous(name = "move forward shoot 3")
-public class MoveForwardShoot3 extends OpMode {
+public class MoveForwardShoot3Old extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     int id;
@@ -91,9 +91,9 @@ public class MoveForwardShoot3 extends OpMode {
                 break;
             case 1:
                 if(!follower.isBusy()) {
-                    if (isRed) robot.turret.faceTo(20);
-                    else robot.turret.faceTo(-20);
-                    robot.shootSequenceStart(RobotConstants.autoSpeedPreset);
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
                     setPathState(2);
                 }
                 break;
@@ -107,34 +107,38 @@ public class MoveForwardShoot3 extends OpMode {
             case 3:
                 if (actionTimer.getElapsedTime() > 2000) {
                     robot.intake.stop();
-                    if (isRed) robot.turret.faceTo(20);
-                    else robot.turret.faceTo(-20);
-                    robot.shootSequenceStart(RobotConstants.autoSpeedPreset);
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
                     actionTimer.resetTimer();
                     setPathState(4);
                 }
-                break;
             case 4:
-                if (!robot.isShooting()) {
-                    robot.intake.trigger();
+                if (!robot.isShooting() && actionTimer.getElapsedTime() > 5000) {
                     actionTimer.resetTimer();
+                    robot.intake.trigger();
+                    follower.followPath(shakePath);
                     setPathState(5);
                 }
                 break;
             case 5:
-                if (actionTimer.getElapsedTime() > 2000) {
-                    if (isRed) robot.turret.faceTo(20);
-                    else robot.turret.faceTo(-20);
+                if (follower.isBusy() && actionTimer.getElapsedTime() > 5000) {
+                    if (isRed) robot.turret.faceTo(17);
+                    else robot.turret.faceTo(-17);
                     robot.intake.stop();
-                    robot.shootSequenceStart(RobotConstants.autoSpeedPreset);
+                    robot.shootSequenceStart(RobotConstants.fullSpeedPreset);
                     actionTimer.resetTimer();
                     setPathState(6);
                 }
-                break;
             case 6:
                 if (!robot.isShooting() && actionTimer.getElapsedTime() > 4000) {
                     follower.followPath(parkPath);
                     setPathState(7);
+                }
+                break;
+            case 7:
+                if(!follower.isBusy()) {
+                    actionTimer.resetTimer();
                 }
                 break;
         }
@@ -151,9 +155,6 @@ public class MoveForwardShoot3 extends OpMode {
         follower.update();
         autonomousPathUpdate();
         TylerDrawing.draw(follower);
-
-        pTelemetry.addData("turret Target Vel", RobotConstants.autoSpeedPreset[0]);
-        pTelemetry.addData("turret Current Vel", robot.turret.spinnerMotor1.getVelocity());
 
         telemetry.addData("path state", pathState);
         telemetry.update();

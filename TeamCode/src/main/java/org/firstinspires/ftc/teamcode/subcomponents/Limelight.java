@@ -10,6 +10,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 
 import java.util.List;
@@ -47,6 +48,20 @@ public class Limelight {
         else {
             return null;
         }
+    }
+
+    public Pose3D limePosFace() {
+        LLResult result = limelight.getLatestResult();
+        if (result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+
+            for (LLResultTypes.FiducialResult f : fiducialResults) {
+                if (f.getFiducialId() == 20 || f.getFiducialId() == 24) {
+                    return f.getRobotPoseFieldSpace();
+                }
+            }
+        }
+        return null;
     }
 
     public int limeScanID() {

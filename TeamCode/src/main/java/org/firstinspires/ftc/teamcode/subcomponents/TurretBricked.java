@@ -1,0 +1,129 @@
+package org.firstinspires.ftc.teamcode.subcomponents;
+
+import static com.qualcomm.robotcore.util.Range.clip;
+import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.utils.PIDController;
+import org.firstinspires.ftc.teamcode.utils.PIDFController;
+import org.firstinspires.ftc.teamcode.utils.RunToMotor;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
+import org.firstinspires.ftc.teamcode.utils.VelocityMotor;
+
+public class TurretBricked {
+    public DcMotor yawMotor;
+    public VelocityMotor spinnerMotor1 = new VelocityMotor();
+    public DcMotor spinnerMotor2;
+    public Servo pitchTurretServo;
+    public Servo pusherServo;
+
+    ElapsedTime et = new ElapsedTime();
+    ElapsedTime yawTimer = new ElapsedTime();
+
+    double shootStartTimeMs = -1;
+    double kickerStartTimeMs = -1;
+    double[] targetPreset = {0, 0};
+
+    public TurretBricked() {}
+
+    public void init(HardwareMap hardwareMap) {
+        yawMotor = hardwareMap.get(DcMotor.class, RobotConstants.yawTurretMotorName);
+        yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        yawMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        yawMotor.setTargetPosition(0);
+        yawMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        yawMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        yawMotor.setPower(0.5);
+
+        spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
+        spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
+        spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        spinnerMotor1.setMaxPower(1);
+        spinnerMotor1.setMaxBoundsForTarget(0.01);
+        spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
+
+        spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
+        spinnerMotor2.setDirection(RobotConstants.spinnerMotor2Direction);
+        spinnerMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        spinnerMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        spinnerMotor2.setPower(0);
+
+        pitchTurretServo = hardwareMap.get(Servo.class, RobotConstants.pitchTurretServoName);
+        pitchTurretServo.setPosition(0.5);
+
+        pusherServo = hardwareMap.get(Servo.class, RobotConstants.pusherServoName);
+        pusherServo.setPosition(RobotConstants.pusherStartPos);
+
+        et.reset();
+        yawTimer.reset();
+    }
+
+    public void loop() {
+        double dt = yawTimer.seconds();
+        yawTimer.reset();
+
+        spinnerMotor1.update();
+        spinnerMotor2.setPower(spinnerMotor1.getPower());
+
+        if (shootStartTimeMs != -1) {
+            if (spinnerMotor1.isAtTargetVelocity() && kickerStartTimeMs == -1) {
+                kickerStartTimeMs = et.milliseconds();
+                pusherServo.setPosition(RobotConstants.pusherEndPos);
+            }
+            if (kickerStartTimeMs != -1) {
+                double timeAfterShoot = et.milliseconds() - kickerStartTimeMs;
+                if (timeAfterShoot < 500) {
+
+                } else if (timeAfterShoot < 1000) {
+                    pusherServo.setPosition(RobotConstants.pusherStartPos);
+                } else {
+                    shootStartTimeMs = -1;
+                    kickerStartTimeMs = -1;
+                    stopSpinner();
+                }
+            }
+        }
+    }
+
+    public void goToPreset(double[] preset) {
+        spinnerMotor1.setTargetVelocity(preset[0]);
+        pitchTurretServo.setPosition(preset[1]);
+    }
+
+    public void goToPreset() {
+        spinnerMotor1.setTargetVelocity(targetPreset[0]);
+        pitchTurretServo.setPosition(targetPreset[1]);
+    }
+
+    public void continueShootSequence(double[] preset) {
+        if (!currentlyShooting()) {
+            shootStartTimeMs = et.milliseconds();
+            goToPreset(preset);
+        }
+    }
+
+    public void setShootPreset(double[] preset) {
+        this.targetPreset = preset;
+    }
+
+    public void stopShootSequence() {
+        shootStartTimeMs = -1;
+        pusherServo.setPosition(RobotConstants.pusherStartPos);
+        stopSpinner();
+    }
+
+    public boolean currentlyShooting() {
+        return shootStartTimeMs != -1;
+    }
+
+    public void stopSpinner() {
+        spinnerMotor1.stop();
+    }
+}

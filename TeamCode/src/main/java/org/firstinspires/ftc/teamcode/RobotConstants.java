@@ -42,6 +42,6 @@ public class RobotConstants {
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
     public static double[] fullSpeedPreset = {2.1, 0.30};
     public static double[] autoSpeedPreset = {1.9, 0.30};
-    public static double[] closestSpeedPreset = {1.30, 0.70};
+    public static double[] closestSpeedPreset = {1.50, 0.82};
 
 }

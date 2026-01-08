@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
@@ -135,10 +136,34 @@ public class Turret {
         }
     }
 
-    public void manualOverride() {
-        clutchServo.setPosition(RobotConstants.clutchEndPos);
 
-        intakeMotor.setPower(RobotConstants.intakeMotorPower);
+    private final ElapsedTime clutchTimer = new ElapsedTime();
+    private int overrideState = 0;
+
+    public void manualOverride() {
+        switch (overrideState) {
+            case 0:
+                clutchServo.setPosition(RobotConstants.clutchEndPos);
+                clutchTimer.reset();
+                overrideState = 1;
+                break;
+
+            case 1:
+                if (clutchTimer.milliseconds() >= 200) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                    overrideState = 2;
+                }
+                break;
+
+            case 2:
+                intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                break;
+        }
+    }
+
+    public void stopManualOverride() {
+        overrideState = 0;
+        intakeMotor.setPower(0);
     }
 
     public void stopIntake() {

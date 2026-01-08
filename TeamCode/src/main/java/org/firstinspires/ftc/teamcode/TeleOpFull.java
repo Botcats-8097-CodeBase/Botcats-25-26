@@ -53,6 +53,8 @@ public class TeleOpFull extends OpMode {
 
     double yawOffset = 90;
 
+    private boolean dpadRightPrev = false;
+
     int id;
 
     public IMU imu;
@@ -151,9 +153,20 @@ public class TeleOpFull extends OpMode {
         else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
         else turret.stopIntake();
 
-        if (gamepad1.dpad_right) {
+
+        boolean dpadRight = gamepad1.dpad_right;
+        if (dpadRight && !dpadRightPrev) {
+            turret.stopManualOverride();
+        }
+
+        if (dpadRight) {
             turret.manualOverride();
         }
+        else {
+            turret.stopManualOverride();
+        }
+        dpadRightPrev = dpadRight;
+
 
         if (gamepad1.dpad_up) turret.clutchServo.setPosition(RobotConstants.clutchStartPos);
         if (gamepad1.dpad_down) turret.clutchServo.setPosition(RobotConstants.clutchEndPos);
@@ -196,9 +209,12 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_down) RobotConstants.yawTurretStartAngle += 1;
             if (gamepad1.dpad_up) RobotConstants.yawTurretStartAngle -= 1;
 
-//            double limePosFace = turret.autoFace(camPose.getPosition().x, camPose.getPosition().y,
-//                    camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180(), isRed);
+            if (limelight.limePosFace() != null) {
+                Pose3D camPose = limelight.limePosFace();
 
+                double limePosFace = turret.autoFace(camPose.getPosition().x, camPose.getPosition().y,
+                        camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180(), isRed);
+            }
             double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw, isRed);
             Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
             telemetry.addData("limeFacingTarget", limeFacingTarget);

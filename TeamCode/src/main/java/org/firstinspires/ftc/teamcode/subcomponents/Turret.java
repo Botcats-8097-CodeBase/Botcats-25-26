@@ -163,7 +163,6 @@ public class Turret {
 
     public void stopManualOverride() {
         overrideState = 0;
-        intakeMotor.setPower(0);
     }
 
     public void stopIntake() {

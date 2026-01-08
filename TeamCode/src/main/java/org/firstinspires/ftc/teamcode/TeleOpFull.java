@@ -155,14 +155,10 @@ public class TeleOpFull extends OpMode {
 
 
         boolean dpadRight = gamepad1.dpad_right;
-        if (dpadRight && !dpadRightPrev) {
-            turret.stopManualOverride();
-        }
-
         if (dpadRight) {
             turret.manualOverride();
         }
-        else {
+        if (!dpadRight && dpadRightPrev) {
             turret.stopManualOverride();
         }
         dpadRightPrev = dpadRight;

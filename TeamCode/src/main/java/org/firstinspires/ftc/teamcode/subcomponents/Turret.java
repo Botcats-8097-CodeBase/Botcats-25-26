@@ -3,9 +3,13 @@ package org.firstinspires.ftc.teamcode.subcomponents;
 import static com.qualcomm.robotcore.util.Range.clip;
 import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
 
+import android.graphics.Color;
+
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -23,13 +27,15 @@ public class Turret {
     public VelocityMotor spinnerMotor1 = new VelocityMotor();
     public DcMotor spinnerMotor2;
     public Servo pitchTurretServo;
-    public Servo pusherServo;
+    public Servo clutchServo;
+    public DcMotor intakeMotor;
+    public ColorSensor lowColorSensor;
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
 
     double shootStartTimeMs = -1;
-    double kickerStartTimeMs = -1;
+    boolean isShooting = false;
     double[] targetPreset = {0, 0};
 
     public Turret() {}
@@ -57,11 +63,18 @@ public class Turret {
         pitchTurretServo = hardwareMap.get(Servo.class, RobotConstants.pitchTurretServoName);
         pitchTurretServo.setPosition(0.5);
 
-        pusherServo = hardwareMap.get(Servo.class, RobotConstants.pusherServoName);
-        pusherServo.setPosition(RobotConstants.pusherStartPos);
+        clutchServo = hardwareMap.get(Servo.class, RobotConstants.clutchServoName);
+        clutchServo.setPosition(RobotConstants.clutchStartPos); //this should be in the "locked-disengaged" position
 
         yawTurretEncoder = hardwareMap.get(AS5600.class, RobotConstants.yawTurretEncoderName);
 
+        intakeMotor = hardwareMap.get(DcMotor.class, RobotConstants.intakeMotorName);
+        intakeMotor.setDirection(RobotConstants.intakeMotorDirection);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        lowColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.lowColorSensorName);
+        lowColorSensor.enableLed(true);
 
         et.reset();
         yawTimer.reset();
@@ -81,23 +94,57 @@ public class Turret {
         spinnerMotor1.update();
         spinnerMotor2.setPower(spinnerMotor1.getPower());
 
-        if (shootStartTimeMs != -1) {
-            if (spinnerMotor1.isAtTargetVelocity() && kickerStartTimeMs == -1) {
-                kickerStartTimeMs = et.milliseconds();
-                pusherServo.setPosition(RobotConstants.pusherEndPos);
-            }
-            if (kickerStartTimeMs != -1) {
-                double timeAfterShoot = et.milliseconds() - kickerStartTimeMs;
-                if (timeAfterShoot < 500) {
-
-                } else if (timeAfterShoot < 1000) {
-                    pusherServo.setPosition(RobotConstants.pusherStartPos);
-                } else {
-                    shootStartTimeMs = -1;
-                    kickerStartTimeMs = -1;
-                    stopSpinner();
+        if (spinnerMotor1.isAtTargetVelocity() && isShooting) {
+            //this code is made when we want a shoot sequence (we don't need this right now)
+            if (shootStartTimeMs == -1) {
+                shootStartTimeMs = et.milliseconds();
+                intakeMotor.setPower(0);
+            } else {
+                double currTime = et.milliseconds() - shootStartTimeMs;
+                if (currTime < 500) {
+                    clutchServo.setPosition(RobotConstants.clutchEndPos);
+                } else if (currTime < 1000) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
                 }
             }
+        }
+    }
+
+    boolean isFirstTrigger = true;
+    public void reverseIntake() {
+        if (!isShooting) {
+            if (isFirstTrigger) {
+                clutchServo.setPosition(RobotConstants.clutchEndPos);
+                isFirstTrigger = false;
+            }
+            intakeMotor.setPower(-RobotConstants.intakeMotorPower);
+        }
+    }
+
+    public void triggerIntake() {
+        if (!isShooting) {
+            if (isFirstTrigger) {
+                clutchServo.setPosition(RobotConstants.clutchEndPos);
+                isFirstTrigger = false;
+            }
+            // 225 purple 157 green
+            float[] hsv = new float[3];
+            Color.RGBToHSV(lowColorSensor.red(), lowColorSensor.green(), lowColorSensor.blue(), hsv);
+            if (Math.abs(hsv[0] - 225) < 10 || Math.abs(hsv[0] - 157) < 10) clutchServo.setPosition(RobotConstants.clutchStartPos);
+            intakeMotor.setPower(RobotConstants.intakeMotorPower);
+        }
+    }
+
+    public void manualOverride() {
+        clutchServo.setPosition(RobotConstants.clutchEndPos);
+
+        intakeMotor.setPower(RobotConstants.intakeMotorPower);
+    }
+
+    public void stopIntake() {
+        if (!isShooting) {
+            intakeMotor.setPower(0);
+            isFirstTrigger = true;
         }
     }
 
@@ -120,10 +167,21 @@ public class Turret {
     }
 
     public void continueShootSequence(double[] preset) {
-        if (!currentlyShooting()) {
-            shootStartTimeMs = et.milliseconds();
+        if (!isShooting) {
+            isShooting = true;
+            shootStartTimeMs = -1;
             goToPreset(preset);
         }
+    }
+
+    // gives spinner speed, and pitch turret position that varies depending on the current velocity
+    // input turret.spinnerMotor1.getVelocity()) and preset
+    public double[] varPreset(double currVel, double[] givenPreset) {
+        double k = 0.5;
+        double newPos = givenPreset[1] + currVel * k;
+
+        givenPreset[1] = newPos;
+        return givenPreset;
     }
 
     public double autoFace(double x, double y, double yaw, boolean isRed) {
@@ -147,13 +205,12 @@ public class Turret {
     }
 
     public void stopShootSequence() {
-        shootStartTimeMs = -1;
-        pusherServo.setPosition(RobotConstants.pusherStartPos);
+        isShooting = false;
         stopSpinner();
     }
 
     public boolean currentlyShooting() {
-        return shootStartTimeMs != -1;
+        return isShooting;
     }
 
     public void stopSpinner() {

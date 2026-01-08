@@ -32,7 +32,6 @@ public class TeleOpFullBricked extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     BasicRobot robot = new BasicRobot();
-    Intake intake = new Intake();
     TurretBricked turret = new TurretBricked();
     Limelight limelight = new Limelight();
     Odometry odo = new Odometry();
@@ -132,11 +131,9 @@ public class TeleOpFullBricked extends OpMode {
                         .rotateVector(-Math.toRadians(yaw-yawOffset))
                 , gamepad1.right_stick_x, coefficient);
 
-        if (gamepad1.right_bumper || gamepad2.right_bumper) intake.trigger();
-        else if (gamepad1.left_bumper || gamepad2.left_bumper) intake.reverseTrigger();
-        else intake.stop();
-
-
+        if (gamepad1.right_bumper || gamepad2.right_bumper) turret.triggerIntake();
+        else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
+        else turret.stopIntake();
 
         if (gamepad1.backWasPressed()) isAutoAiming = !isAutoAiming;
 
@@ -178,7 +175,6 @@ public class TeleOpFullBricked extends OpMode {
         }
 
         robot.init(hardwareMap);
-        intake.init(hardwareMap);
         turret.init(hardwareMap);
         limelight.init(hardwareMap);
         odo.init(hardwareMap);

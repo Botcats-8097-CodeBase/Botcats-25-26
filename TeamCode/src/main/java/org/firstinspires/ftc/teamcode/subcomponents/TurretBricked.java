@@ -3,13 +3,16 @@ package org.firstinspires.ftc.teamcode.subcomponents;
 import static com.qualcomm.robotcore.util.Range.clip;
 import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
 
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.utils.NoiseFilter;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
 import org.firstinspires.ftc.teamcode.utils.RunToMotor;
@@ -18,16 +21,20 @@ import org.firstinspires.ftc.teamcode.utils.VelocityMotor;
 
 public class TurretBricked {
     public DcMotor yawMotor;
+    public AS5600 yawTurretEncoder;
     public VelocityMotor spinnerMotor1 = new VelocityMotor();
     public DcMotor spinnerMotor2;
     public Servo pitchTurretServo;
-    public Servo pusherServo;
+    public Servo clutchServo;
+
+    DcMotor intakeMotor;
+    ColorSensor lowColorSensor;
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
 
     double shootStartTimeMs = -1;
-    double kickerStartTimeMs = -1;
+    boolean isShooting = false;
     double[] targetPreset = {0, 0};
 
     public TurretBricked() {}
@@ -35,12 +42,9 @@ public class TurretBricked {
     public void init(HardwareMap hardwareMap) {
         yawMotor = hardwareMap.get(DcMotor.class, RobotConstants.yawTurretMotorName);
         yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        yawMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         yawMotor.setTargetPosition(0);
         yawMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        yawMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        yawMotor.setPower(0.5);
+        yawMotor.setPower(0.4);
 
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
@@ -58,8 +62,18 @@ public class TurretBricked {
         pitchTurretServo = hardwareMap.get(Servo.class, RobotConstants.pitchTurretServoName);
         pitchTurretServo.setPosition(0.5);
 
-        pusherServo = hardwareMap.get(Servo.class, RobotConstants.pusherServoName);
-        pusherServo.setPosition(RobotConstants.pusherStartPos);
+        clutchServo = hardwareMap.get(Servo.class, RobotConstants.clutchServoName);
+        clutchServo.setPosition(RobotConstants.clutchStartPos); //this should be in the "locked-disengaged" position
+
+        yawTurretEncoder = hardwareMap.get(AS5600.class, RobotConstants.yawTurretEncoderName);
+
+        intakeMotor = hardwareMap.get(DcMotor.class, RobotConstants.intakeMotorName);
+        intakeMotor.setDirection(RobotConstants.intakeMotorDirection);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        lowColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.lowColorSensorName);
+        lowColorSensor.enableLed(true);
 
         et.reset();
         yawTimer.reset();
@@ -67,30 +81,32 @@ public class TurretBricked {
 
     public void loop() {
         double dt = yawTimer.seconds();
-        yawTimer.reset();
 
         spinnerMotor1.update();
         spinnerMotor2.setPower(spinnerMotor1.getPower());
 
-        if (shootStartTimeMs != -1) {
-            if (spinnerMotor1.isAtTargetVelocity() && kickerStartTimeMs == -1) {
-                kickerStartTimeMs = et.milliseconds();
-                pusherServo.setPosition(RobotConstants.pusherEndPos);
-            }
-            if (kickerStartTimeMs != -1) {
-                double timeAfterShoot = et.milliseconds() - kickerStartTimeMs;
-                if (timeAfterShoot < 500) {
-
-                } else if (timeAfterShoot < 1000) {
-                    pusherServo.setPosition(RobotConstants.pusherStartPos);
-                } else {
-                    shootStartTimeMs = -1;
-                    kickerStartTimeMs = -1;
-                    stopSpinner();
-                }
+        if (spinnerMotor1.isAtTargetVelocity() && isShooting) {
+            //this code is made when we want a shoot sequence (we don't need this right now)
+            if (shootStartTimeMs == -1) {
+                shootStartTimeMs = et.milliseconds();
+                stopIntake();
+            } else if (shootStartTimeMs < 500) {
+                clutchServo.setPosition(RobotConstants.clutchStartPos);
+            } else if (shootStartTimeMs < 1000) {
+                triggerIntake();
             }
         }
     }
+
+    public void reverseIntake() {
+        intakeMotor.setPower(-RobotConstants.intakeMotorPower);
+    }
+
+    public void triggerIntake() {
+        intakeMotor.setPower(RobotConstants.intakeMotorPower);
+    }
+
+    public void stopIntake() { intakeMotor.setPower(0); }
 
     public void goToPreset(double[] preset) {
         spinnerMotor1.setTargetVelocity(preset[0]);
@@ -109,21 +125,74 @@ public class TurretBricked {
         }
     }
 
+    // gives spinner speed, and pitch turret position that varies depending on the current velocity
+    // input turret.spinnerMotor1.getVelocity()) and preset
+    public double[] varPreset(double currVel, double[] givenPreset) {
+        double k = 0.5;
+        double newPos = givenPreset[1] + currVel * k;
+
+        givenPreset[1] = newPos;
+        return givenPreset;
+    }
+
+    public double autoFace(double x, double y, double yaw, boolean isRed) {
+        double gx;
+        double gy;
+        if (isRed) {
+            gx = -72;
+            gy = 72;
+        } else {
+            gx = -72;
+            gy = -72;
+        }
+
+        double out =  TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
+
+        return out;
+    }
+
     public void setShootPreset(double[] preset) {
         this.targetPreset = preset;
     }
 
     public void stopShootSequence() {
-        shootStartTimeMs = -1;
-        pusherServo.setPosition(RobotConstants.pusherStartPos);
+        isShooting = false;
         stopSpinner();
     }
 
     public boolean currentlyShooting() {
-        return shootStartTimeMs != -1;
+        return isShooting;
     }
 
     public void stopSpinner() {
         spinnerMotor1.stop();
+    }
+
+    public double getCurrentFacing() {
+        return yawMotor.getCurrentPosition();
+    }
+
+    private Double lastAngle0to360 = null;
+    private double continuousAngleDeg = 0;
+    public double getContinuousTurretAngle() {
+        double current = yawTurretEncoder.getAngle180to180();
+
+        if (lastAngle0to360 != null) {
+            double delta = current - lastAngle0to360;
+
+            if (delta > 180) delta -= 360;
+            if (delta < -180) delta += 360;
+
+            continuousAngleDeg += delta;
+        }
+
+        lastAngle0to360 = current;
+        return continuousAngleDeg;
+    }
+
+    private double shortestAngleDiff(double target, double current) {
+        double diff = target - current;
+        diff = normalize180(diff);
+        return diff;
     }
 }

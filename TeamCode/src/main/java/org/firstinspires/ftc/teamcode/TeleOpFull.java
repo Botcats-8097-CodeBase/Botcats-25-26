@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.util.Range.clip;
 
+import android.graphics.Color;
+
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.utils.TylerMath;
 
@@ -37,7 +39,6 @@ public class TeleOpFull extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     BasicRobot robot = new BasicRobot();
-    Intake intake = new Intake();
     Turret turret = new Turret();
     Limelight limelight = new Limelight();
     Odometry odo = new Odometry();
@@ -146,11 +147,16 @@ public class TeleOpFull extends OpMode {
                         .rotateVector(-Math.toRadians(yaw-yawOffset))
                 , gamepad1.right_stick_x, coefficient);
 
-        if (gamepad1.right_bumper || gamepad2.right_bumper) intake.trigger();
-        else if (gamepad1.left_bumper || gamepad2.left_bumper) intake.reverseTrigger();
-        else intake.stop();
+        if (gamepad1.right_bumper || gamepad2.right_bumper) turret.triggerIntake();
+        else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
+        else turret.stopIntake();
 
+        if (gamepad1.dpad_right) {
+            turret.manualOverride();
+        }
 
+        if (gamepad1.dpad_up) turret.clutchServo.setPosition(RobotConstants.clutchStartPos);
+        if (gamepad1.dpad_down) turret.clutchServo.setPosition(RobotConstants.clutchEndPos);
 
         if (gamepad1.backWasPressed()) isAutoAiming = !isAutoAiming;
 
@@ -218,7 +224,12 @@ public class TeleOpFull extends OpMode {
             pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
             pTelemetry.addData("facing", facingTarget);
             pTelemetry.addData("facing Current", turret.yawMotor.getCurrentPosition());
-            pTelemetry.addData("facing Target", turret.yawMotor.getTargetPosition());
+            pTelemetry.addData("color alpha", turret.lowColorSensor.alpha());
+            float[] hsv = new float[3];
+            Color.RGBToHSV(turret.lowColorSensor.red(), turret.lowColorSensor.green(), turret.lowColorSensor.blue(), hsv);
+            pTelemetry.addData("color h", hsv[0]);
+            pTelemetry.addData("color s", hsv[1]);
+            pTelemetry.addData("color v", hsv[2]);
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
@@ -239,7 +250,6 @@ public class TeleOpFull extends OpMode {
         }
 
         robot.init(hardwareMap);
-        intake.init(hardwareMap);
         turret.init(hardwareMap);
         limelight.init(hardwareMap);
         odo.init(hardwareMap);

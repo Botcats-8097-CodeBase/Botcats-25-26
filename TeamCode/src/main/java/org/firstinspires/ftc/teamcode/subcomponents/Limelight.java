@@ -17,8 +17,6 @@ import java.util.List;
 
 @Configurable
 public class Limelight {
-    public double tx;
-    public double ty;
     private Limelight3A limelight;
     double filteredTx = 0;
 

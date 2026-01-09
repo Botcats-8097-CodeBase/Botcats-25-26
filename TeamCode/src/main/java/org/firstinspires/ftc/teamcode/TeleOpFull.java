@@ -131,8 +131,8 @@ public class TeleOpFull extends OpMode {
         if (limelight.limePosFace() != null) {
             Pose3D camPose = limelight.limePosFace();
 
-            pTelemetry.addData("Robot Yaw from lime", camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180());
-            pTelemetry.addData("Lime Yaw", camPose.getOrientation().getYaw(AngleUnit.DEGREES));
+//            pTelemetry.addData("Robot Yaw from lime", camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180() + 180);
+//            pTelemetry.addData("Lime Yaw", camPose.getOrientation().getYaw(AngleUnit.DEGREES));
         }
 
         // pressurising the right trigger slows down the drive train
@@ -205,29 +205,34 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_down) RobotConstants.yawTurretStartAngle += 1;
             if (gamepad1.dpad_up) RobotConstants.yawTurretStartAngle -= 1;
 
-            if (limelight.limePosFace() != null) {
-                Pose3D camPose = limelight.limePosFace();
 
-                double limePosFace = turret.autoFace(camPose.getPosition().x, camPose.getPosition().y,
-                        camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180(), isRed);
-            }
             double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw, isRed);
+            pTelemetry.addData("facingTarget", facingTarget);
+
             Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
-            telemetry.addData("limeFacingTarget", limeFacingTarget);
+//            telemetry.addData("limeFacingTarget", limeFacingTarget);
             if (limeFacingTarget == null) {
                 if ((getRuntime() - lastTimeSeenLimelight) > 0.8) turret.faceTo(facingTarget);
             } else {
-                if (robotPos.getX(DistanceUnit.INCH) > 40) {
-                    double limeOffsetFar = 1.5;
-                    telemetry.addData("usingLimeOffset", true);
-                    if (isRed) {
-                        limeFacingTarget += limeOffsetFar;
-                    } else {
-                        limeFacingTarget -= limeOffsetFar;
-                    }
-                }
+//                if (robotPos.getX(DistanceUnit.INCH) > 40) {
+//                    double limeOffsetFar = 1.5;
+//                    telemetry.addData("usingLimeOffset", true);
+//                    if (isRed) {
+//                        limeFacingTarget += limeOffsetFar;
+//                    } else {
+//                        limeFacingTarget -= limeOffsetFar;
+//                    }
+//                }
+                Pose3D camPose = limelight.limePosFace();
+
+                double limePosFace = turret.autoFace(camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
+                        yaw, isRed);
+
                 lastTimeSeenLimelight = getRuntime();
-                turret.faceTo(limeFacingTarget);
+                turret.faceTo(limePosFace);
+                pTelemetry.addData("limePosFace", limePosFace);
+                pTelemetry.addData("lime pos x", camPose.getPosition().x * 39.37);
+                pTelemetry.addData("lime pos y", camPose.getPosition().y * 39.37);
             }
 
 
@@ -247,7 +252,7 @@ public class TeleOpFull extends OpMode {
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
 
-        turret.loop();
+        turret.loop(preset);
 
         pTelemetry.update();
 

@@ -44,7 +44,7 @@ public class AS5600 extends I2cDeviceSynchDevice<I2cDeviceSynch> {
 
     // --- public API ---
 
-    public double directionSign = -1.0;
+    public double directionSign = 1.0;
     public double offsetDeg = 0;
 
     public int getRawAngle() {

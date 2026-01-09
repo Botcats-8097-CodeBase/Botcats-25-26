@@ -53,7 +53,9 @@ public class Turret {
         spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         spinnerMotor1.setMaxPower(1);
         spinnerMotor1.setMaxBoundsForTarget(0.01);
+        //spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
         spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
+
 
         spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
         spinnerMotor2.setDirection(RobotConstants.spinnerMotor2Direction);
@@ -81,7 +83,7 @@ public class Turret {
         yawTimer.reset();
     }
 
-    public void loop() {
+    public void loop(double[] preset) {
         double dt = yawTimer.seconds();
         yawTimer.reset();
 

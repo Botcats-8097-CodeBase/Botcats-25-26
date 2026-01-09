@@ -18,16 +18,19 @@ public class VelocityMotor {
 
     double targetVelocity = 0;
 
-    NoiseFilter velocityFilter = new NoiseFilter(0.3, 5);
+    // errorBounds before: 5
+    NoiseFilter velocityFilter = new NoiseFilter(0.3, 25);
     NoiseFilter accelerationFilter = new NoiseFilter(0.3, 5);
 
     boolean isStopped = true;
     double currentPower = 0;
     double lastPos = 0;
     double maxPower = 0.9;
+    // before: 0.0001
     double maxAccelForTarget = 0.0001;
 
-    double maxBoundsForTarget = 0.1;
+    // before: 0.1
+    double maxBoundsForTarget = 0.2;
 
     public VelocityMotor() {}
 

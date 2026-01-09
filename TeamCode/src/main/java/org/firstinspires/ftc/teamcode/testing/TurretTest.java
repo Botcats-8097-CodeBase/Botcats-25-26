@@ -58,7 +58,7 @@ public class TurretTest extends OpMode {
 
         telemetry.addData("turret yaw encoder", turret.yawTurretEncoder.getAngle180to180());
 
-        turret.loop();
+        //turret.loop();
 
         telemetry.update();
     }

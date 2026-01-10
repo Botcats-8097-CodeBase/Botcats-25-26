@@ -210,8 +210,9 @@ public class TeleOpFull extends OpMode {
             pTelemetry.addData("facingTarget", facingTarget);
 
             Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
+            Pose3D camPose = limelight.limePosFace();
 //            telemetry.addData("limeFacingTarget", limeFacingTarget);
-            if (limeFacingTarget == null) {
+            if (limeFacingTarget == null || camPose == null) {
                 if ((getRuntime() - lastTimeSeenLimelight) > 0.8) turret.faceTo(facingTarget);
             } else {
 //                if (robotPos.getX(DistanceUnit.INCH) > 40) {
@@ -223,7 +224,7 @@ public class TeleOpFull extends OpMode {
 //                        limeFacingTarget -= limeOffsetFar;
 //                    }
 //                }
-                Pose3D camPose = limelight.limePosFace();
+
 
                 double limePosFace = turret.autoFace(camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
                         yaw, isRed);
@@ -237,6 +238,7 @@ public class TeleOpFull extends OpMode {
 
 
             pTelemetry.addData("turret Target Vel", preset[0]);
+            pTelemetry.addData("turret Target Vel 2", preset[1]);
             pTelemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
             pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
             pTelemetry.addData("facing", facingTarget);

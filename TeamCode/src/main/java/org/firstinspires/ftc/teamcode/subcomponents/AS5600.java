@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.configuration.annotations.DevicePropertie
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
 
 @I2cDeviceType
 @DeviceProperties(
@@ -44,7 +45,7 @@ public class AS5600 extends I2cDeviceSynchDevice<I2cDeviceSynch> {
 
     // --- public API ---
 
-    public double directionSign = 1.0;
+    public double directionSign = -1.0;
     public double offsetDeg = 0;
 
     public int getRawAngle() {
@@ -62,7 +63,7 @@ public class AS5600 extends I2cDeviceSynchDevice<I2cDeviceSynch> {
         double angle = getAngleRaw0to360();
         angle -= RobotConstants.yawTurretStartAngle;
         angle *= directionSign;
-
+        angle = TylerMath.wrap(angle, 0, 360);
         return angle;
     }
 

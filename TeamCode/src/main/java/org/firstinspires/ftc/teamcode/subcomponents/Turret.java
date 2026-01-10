@@ -51,10 +51,10 @@ public class Turret {
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
         spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        spinnerMotor1.setMaxPower(1);
-        spinnerMotor1.setMaxBoundsForTarget(0.01);
+        spinnerMotor1.setMaxPower(1.1);
+        spinnerMotor1.setMaxBoundsForTarget(0.02);
         //spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
-        spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
+        spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 1.1, 0.420, 150));
 
 
         spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
@@ -97,18 +97,25 @@ public class Turret {
         spinnerMotor1.update();
         spinnerMotor2.setPower(spinnerMotor1.getPower());
 
-        if (spinnerMotor1.isAtTargetVelocity() && isShooting) {
+        if ((spinnerMotor1.isAtTargetVelocity() || shootStartTimeMs != -1) && isShooting) {
             //this code is made when we want a shoot sequence (we don't need this right now)
             if (shootStartTimeMs == -1) {
                 shootStartTimeMs = et.milliseconds();
                 intakeMotor.setPower(0);
             } else {
                 double currTime = et.milliseconds() - shootStartTimeMs;
+
+                if (!spinnerMotor1.velocityFilter.isDataless())
+                    pitchTurretServo.setPosition(varPreset(-(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity()), preset[1]));
+
                 if (currTime < 500) {
                     clutchServo.setPosition(RobotConstants.clutchEndPos);
                 } else if (currTime < 1000) {
                     intakeMotor.setPower(RobotConstants.intakeMotorPower);
                 }
+//                else if (currTime < 1500) {
+//                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.1);
+//                }
             }
         }
     }
@@ -202,12 +209,11 @@ public class Turret {
 
     // gives spinner speed, and pitch turret position that varies depending on the current velocity
     // input turret.spinnerMotor1.getVelocity()) and preset
-    public double[] varPreset(double currVel, double[] givenPreset) {
-        double k = 0.5;
-        double newPos = givenPreset[1] + currVel * k;
-
-        givenPreset[1] = newPos;
-        return givenPreset;
+    public double varPreset(double error, double startPos) {
+        double k = 0.2;
+        double newPos = startPos + error * k;
+        newPos = clip(newPos, 0.3, 0.8);
+        return newPos;
     }
 
     public double autoFace(double x, double y, double yaw, boolean isRed) {

@@ -19,7 +19,7 @@ public class VelocityMotor {
     double targetVelocity = 0;
 
     // errorBounds before: 5
-    NoiseFilter velocityFilter = new NoiseFilter(0.3, 25);
+    public NoiseFilter velocityFilter = new NoiseFilter(0.3, 25);
     NoiseFilter accelerationFilter = new NoiseFilter(0.3, 5);
 
     boolean isStopped = true;
@@ -50,8 +50,8 @@ public class VelocityMotor {
     }
 
     public boolean isAtTargetVelocity() {
-        if (velocityFilter.isDataless() || accelerationFilter.isDataless()) return false;
-        return Math.abs(targetVelocity - velocityFilter.getPos()) < maxBoundsForTarget && Math.abs(accelerationFilter.getPos()) < maxAccelForTarget ;
+        if (velocityFilter.isDataless()) return false;// || accelerationFilter.isDataless()) return false;
+        return Math.abs(targetVelocity - velocityFilter.getPos()) < maxBoundsForTarget;// && Math.abs(accelerationFilter.getPos()) < maxAccelForTarget ;
     }
 
     public void update() {

@@ -210,9 +210,9 @@ public class Turret {
     // gives spinner speed, and pitch turret position that varies depending on the current velocity
     // input turret.spinnerMotor1.getVelocity()) and preset
     public double varPreset(double error, double startPos) {
-        double k = 0.2;
+        double k = 0.30;
         double newPos = startPos + error * k;
-        newPos = clip(newPos, 0.3, 0.8);
+        newPos = clip(newPos, 0.3, 0.82);
         return newPos;
     }
 

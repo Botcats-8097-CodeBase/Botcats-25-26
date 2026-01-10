@@ -48,6 +48,7 @@ public class Limelight {
         }
     }
 
+    // Outputs in meters and degrees
     public Pose3D limePosFace() {
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
@@ -74,6 +75,20 @@ public class Limelight {
             }
         }
         return 0;
+    }
+
+    public boolean limeNullCheck() {
+        LLResult result = limelight.getLatestResult();
+        if (result.isValid()) {
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+
+            for (LLResultTypes.FiducialResult fr : fiducialResults) {
+                if (fr.getFiducialId() == 20 || fr.getFiducialId() == 24) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public double limeScanPosX(int tagID) {

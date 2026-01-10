@@ -31,6 +31,7 @@ public class Turret {
     public Servo clutchServo;
     public DcMotor intakeMotor;
     public ColorSensor lowColorSensor;
+    public ColorSensor highColorSensor;
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
@@ -52,7 +53,7 @@ public class Turret {
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
         spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         spinnerMotor1.setMaxPower(1.1);
-        spinnerMotor1.setMaxBoundsForTarget(0.02);
+        spinnerMotor1.setMaxBoundsForTarget(0.01);
         //spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
         spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 1.1, 0.420, 150));
 
@@ -78,6 +79,8 @@ public class Turret {
 
         lowColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.lowColorSensorName);
         lowColorSensor.enableLed(true);
+        highColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.highColorSensorName);
+        highColorSensor.enableLed(true);
 
         et.reset();
         yawTimer.reset();
@@ -139,7 +142,9 @@ public class Turret {
             }
             // 225 purple 157 green
             float[] hsv = new float[3];
+            float[] hsv1 = new float[3];
             Color.RGBToHSV(lowColorSensor.red(), lowColorSensor.green(), lowColorSensor.blue(), hsv);
+            Color.RGBToHSV(highColorSensor.red(), highColorSensor.green(), highColorSensor.blue(), hsv1);
             if (Math.abs(hsv[0] - 225) < 10 || Math.abs(hsv[0] - 157) < 10) clutchServo.setPosition(RobotConstants.clutchStartPos);
             intakeMotor.setPower(RobotConstants.intakeMotorPower);
         }

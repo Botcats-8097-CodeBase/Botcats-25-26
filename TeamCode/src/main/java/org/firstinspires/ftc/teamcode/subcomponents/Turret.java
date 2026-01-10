@@ -30,8 +30,8 @@ public class Turret {
     public Servo pitchTurretServo;
     public Servo clutchServo;
     public DcMotor intakeMotor;
-    public ColorSensor lowColorSensor;
-    public ColorSensor highColorSensor;
+    public CustomColorSensor lowColor = new CustomColorSensor();
+    public CustomColorSensor highColor = new CustomColorSensor();
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
@@ -77,16 +77,15 @@ public class Turret {
         intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        lowColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.lowColorSensorName);
-        lowColorSensor.enableLed(true);
-        highColorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.highColorSensorName);
-        highColorSensor.enableLed(true);
+        lowColor.init(hardwareMap, RobotConstants.lowColorSensorName);
+        highColor.init(hardwareMap, RobotConstants.highColorSensorName);
 
         et.reset();
         yawTimer.reset();
     }
 
     public void loop(double[] preset) {
+        targetPreset = preset;
         double dt = yawTimer.seconds();
         yawTimer.reset();
 
@@ -115,10 +114,9 @@ public class Turret {
                     clutchServo.setPosition(RobotConstants.clutchEndPos);
                 } else if (currTime < 1000) {
                     intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                } else if (currTime < 1250) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.3);
                 }
-//                else if (currTime < 1500) {
-//                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.1);
-//                }
             }
         }
     }
@@ -130,23 +128,27 @@ public class Turret {
                 clutchServo.setPosition(RobotConstants.clutchEndPos);
                 isFirstTrigger = false;
             }
+            isFirstStop = true;
             intakeMotor.setPower(-RobotConstants.intakeMotorPower);
         }
     }
 
     public void triggerIntake() {
         if (!isShooting) {
+            isFirstStop = true;
             if (isFirstTrigger) {
-                clutchServo.setPosition(RobotConstants.clutchEndPos);
                 isFirstTrigger = false;
+                clutchTimer.reset();
             }
-            // 225 purple 157 green
-            float[] hsv = new float[3];
-            float[] hsv1 = new float[3];
-            Color.RGBToHSV(lowColorSensor.red(), lowColorSensor.green(), lowColorSensor.blue(), hsv);
-            Color.RGBToHSV(highColorSensor.red(), highColorSensor.green(), highColorSensor.blue(), hsv1);
-            if (Math.abs(hsv[0] - 225) < 10 || Math.abs(hsv[0] - 157) < 10) clutchServo.setPosition(RobotConstants.clutchStartPos);
-            intakeMotor.setPower(RobotConstants.intakeMotorPower);
+
+            if (lowColor.checkColor()) {
+                intakeMotor.setPower(RobotConstants.intakeMotorPower - 0.3);
+            } else {
+                intakeMotor.setPower(RobotConstants.intakeMotorPower);
+            }
+            if (highColor.checkColor()){
+                clutchServo.setPosition(RobotConstants.clutchStartPos);
+            }
         }
     }
 
@@ -179,10 +181,19 @@ public class Turret {
         overrideState = 0;
     }
 
+    boolean isFirstStop;
     public void stopIntake() {
         if (!isShooting) {
+            if (isFirstStop) {
+                isFirstStop = false;
+                clutchTimer.reset();
+            }
             intakeMotor.setPower(0);
             isFirstTrigger = true;
+
+            if (clutchTimer.milliseconds() > 200) {
+                clutchServo.setPosition(RobotConstants.clutchEndPos);
+            }
         }
     }
 
@@ -215,7 +226,7 @@ public class Turret {
     // gives spinner speed, and pitch turret position that varies depending on the current velocity
     // input turret.spinnerMotor1.getVelocity()) and preset
     public double varPreset(double error, double startPos) {
-        double k = 0.30;
+        double k = 1;
         double newPos = startPos + error * k;
         newPos = clip(newPos, 0.3, 0.82);
         return newPos;

@@ -5,12 +5,9 @@ import static com.qualcomm.robotcore.util.Range.clip;
 import android.graphics.Color;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.teamcode.utils.TylerMath;
 
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
-import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -22,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.subcomponents.Intake;
+import org.firstinspires.ftc.teamcode.subcomponents.CustomColorSensor;
 import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
 import org.firstinspires.ftc.teamcode.subcomponents.Odometry;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
@@ -243,9 +240,9 @@ public class TeleOpFull extends OpMode {
             pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
             pTelemetry.addData("facing", facingTarget);
             pTelemetry.addData("facing Current", turret.yawMotor.getCurrentPosition());
-            pTelemetry.addData("color alpha", turret.lowColorSensor.alpha());
+            pTelemetry.addData("color alpha", turret.highColor.lowColorSensor.alpha());
             float[] hsv = new float[3];
-            Color.RGBToHSV(turret.lowColorSensor.red(), turret.lowColorSensor.green(), turret.lowColorSensor.blue(), hsv);
+            Color.RGBToHSV(turret.highColor.lowColorSensor.red(), turret.highColor.lowColorSensor.green(), turret.highColor.lowColorSensor.blue(), hsv);
             pTelemetry.addData("color h", hsv[0]);
             pTelemetry.addData("color s", hsv[1]);
             pTelemetry.addData("color v", hsv[2]);

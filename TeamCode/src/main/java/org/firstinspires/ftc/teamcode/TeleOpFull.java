@@ -49,6 +49,7 @@ public class TeleOpFull extends OpMode {
     boolean isConstantPreset = false;
 
     double yawOffset = 90;
+    double imuOffset = 0;
 
     private boolean dpadRightPrev = false;
 
@@ -80,6 +81,7 @@ public class TeleOpFull extends OpMode {
 
         if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
             initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, (double) blackboard.get("heading"));
+            imuOffset = ((double) blackboard.get("heading"));
         } else {
             if (!isRed) {
                 if (isClose) {
@@ -119,18 +121,12 @@ public class TeleOpFull extends OpMode {
         if (gamepad1.y) {
             imu.resetYaw();
             imu.initialize(parameters);
+            imuOffset = 0;
         }
 
         YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
-        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES);
+        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
         pTelemetry.addData("Robot Yaw (imu)", yaw);
-
-        if (limelight.limePosFace() != null) {
-            Pose3D camPose = limelight.limePosFace();
-
-//            pTelemetry.addData("Robot Yaw from lime", camPose.getOrientation().getYaw(AngleUnit.DEGREES) - turret.yawTurretEncoder.getAngle180to180() + 180);
-//            pTelemetry.addData("Lime Yaw", camPose.getOrientation().getYaw(AngleUnit.DEGREES));
-        }
 
         // pressurising the right trigger slows down the drive train
         double coefficient = 0.35;

@@ -3,9 +3,8 @@ package org.firstinspires.ftc.teamcode.autos;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.teamcode.subcomponents.Intake;
+import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
-import org.firstinspires.ftc.teamcode.subcomponents.Odometry;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
 
 public class AutoRobot {
@@ -22,15 +21,11 @@ public class AutoRobot {
     }
 
     public void update() {
-        turret.loop();
+        turret.loop(RobotConstants.autoSpeedPreset);
     }
 
     public void faceTarget(Pose pose, boolean isRed) {
         turret.autoFace(pose.getX() - 72, pose.getY() - 72, pose.getHeading() - 90, isRed);
-    }
-
-    public void shootSequenceStart(double[] preset) {
-        turret.continueShootSequence(preset);
     }
 
     public boolean isShooting() {

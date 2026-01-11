@@ -54,9 +54,7 @@ public class Turret {
         spinnerMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         spinnerMotor1.setMaxPower(1.1);
         spinnerMotor1.setMaxBoundsForTarget(0.01);
-        //spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 0, 0.420, 100));
         spinnerMotor1.setVelController(new PIDFController(1.4, 0.002, 1.1, 0.420, 150));
-
 
         spinnerMotor2 = hardwareMap.get(DcMotor.class, RobotConstants.spinnerMotor2Name);
         spinnerMotor2.setDirection(RobotConstants.spinnerMotor2Direction);
@@ -192,7 +190,8 @@ public class Turret {
             isFirstTrigger = true;
 
             if (clutchTimer.milliseconds() > 200) {
-                clutchServo.setPosition(RobotConstants.clutchEndPos);
+                if (!lowColor.checkColor() && !highColor.checkColor())
+                    clutchServo.setPosition(RobotConstants.clutchEndPos);
             }
         }
     }
@@ -206,6 +205,7 @@ public class Turret {
     }
 
     public void goToPreset(double[] preset) {
+        targetPreset = preset;
         spinnerMotor1.setTargetVelocity(preset[0]);
         pitchTurretServo.setPosition(preset[1]);
     }
@@ -237,15 +237,13 @@ public class Turret {
         double gy;
         if (isRed) {
             gx = -72;
-            gy = 72;
+            gy = 68;
         } else {
             gx = -72;
-            gy = -72;
+            gy = -68;
         }
 
-        double out =  TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
-
-        return out;
+        return TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
     }
 
     public void setShootPreset(double[] preset) {

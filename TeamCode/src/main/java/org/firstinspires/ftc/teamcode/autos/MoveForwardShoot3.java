@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -47,11 +48,11 @@ public class MoveForwardShoot3 extends OpMode {
     public void buildPaths() {
         if (!isRed) {
             startPose = AutoConstants.blueCloseStartPos;
-            scorePose = new Pose(53.5, 96, Math.toRadians(135));
+            scorePose = new Pose(53.5, 90, Math.toRadians(135));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
         } else {
             startPose = AutoConstants.redCloseStartPos;
-            scorePose = new Pose(90.5, 96, Math.toRadians(45));
+            scorePose = new Pose(90.5, 90, Math.toRadians(45));
             parkPose = new Pose(90.5, 40, Math.toRadians(90));
         }
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
@@ -84,14 +85,14 @@ public class MoveForwardShoot3 extends OpMode {
                 }
                 break;
             case 2:
-                robot.shootSequenceStart(RobotConstants.autoSpeedPreset);
-                if (actionTimer.getElapsedTime() > 4000) {
+                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+                if (actionTimer.getElapsedTime() > 9000) {
                     setPathState(3);
                 }
                 break;
             case 3:
                 follower.followPath(parkPath);
-                setPathState(7);
+                setPathState(5);
                 break;
         }
     }
@@ -110,6 +111,18 @@ public class MoveForwardShoot3 extends OpMode {
 
         pTelemetry.addData("turret Target Vel", RobotConstants.autoSpeedPreset[0]);
         pTelemetry.addData("turret Current Vel", robot.turret.spinnerMotor1.getVelocity());
+
+        Double limeFacingTarget = robot.limelight.limeAutoFacing(robot.turret.getCurrentFacing(), id);
+        Pose3D camPose = robot.limelight.limePosFace();
+        if (limeFacingTarget != null && camPose != null) {
+            double limePosFace = robot.turret.autoFace(camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
+                    Math.toDegrees(follower.getPose().getHeading()) - 90, isRed);
+
+            robot.turret.faceTo(limePosFace);
+            pTelemetry.addData("limePosFace", limePosFace);
+            pTelemetry.addData("lime pos x", camPose.getPosition().x * 39.37);
+            pTelemetry.addData("lime pos y", camPose.getPosition().y * 39.37);
+        }
 
         telemetry.addData("path state", pathState);
         telemetry.update();

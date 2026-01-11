@@ -15,7 +15,7 @@ public class AutoRobot {
 
     public AutoRobot() {}
 
-    public void init(HardwareMap hardwareMap, boolean isRed) {
+    public void init(HardwareMap hardwareMap) {
         turret.init(hardwareMap);
         limelight.init(hardwareMap);
     }

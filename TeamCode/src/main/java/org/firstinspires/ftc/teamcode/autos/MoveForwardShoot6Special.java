@@ -14,13 +14,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "move forward shoot 12")
-public class MoveForwardShoot6 extends OpMode {
+@Autonomous(name = "move forward shoot 12 special")
+public class MoveForwardShoot6Special extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     int id;
@@ -56,7 +54,7 @@ public class MoveForwardShoot6 extends OpMode {
             scorePose = new Pose(53.5, 88, Math.toRadians(135));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
         } else {
-            startPose = AutoConstants.redCloseStartPos;
+            startPose = new Pose(118.5, 126, Math.toRadians(45));
             scorePose = new Pose(90.5, 88, Math.toRadians(45));
             parkPose = new Pose(90.5, 40, Math.toRadians(90));
             stripXCoordS = 98;
@@ -101,12 +99,8 @@ public class MoveForwardShoot6 extends OpMode {
                 .build();
 
         ethanPath3 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, thirdStripS))
+                .addPath(new BezierLine(scorePose, scorePose.plus(new Pose(0, 30))))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), thirdStripS.getHeading())
-                .addPath(new BezierLine(thirdStripS, thirdStripE))
-                .setLinearHeadingInterpolation(thirdStripS.getHeading(), thirdStripE.getHeading())
-                .addPath(new BezierLine(thirdStripE, scorePose.plus(new Pose(0, intakeOffset))))
-                .setLinearHeadingInterpolation(thirdStripE.getHeading(), scorePose.getHeading())
                 .build();
     }
 
@@ -186,28 +180,6 @@ public class MoveForwardShoot6 extends OpMode {
                     follower.followPath(ethanPath3);
                     setPathState(10);
                 }
-                break;
-            case 10:
-                robot.turret.triggerIntake();
-                if (!follower.isBusy()) {
-                    setPathState(11);
-                    robot.turret.stopIntake();
-                    actionTimer.resetTimer();
-                }
-                break;
-            case 11:
-                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-                if (actionTimer.getElapsedTime() > 4000) {
-                    actionTimer.resetTimer();
-                    setPathState(12);
-                }
-                break;
-
-            case 12:
-                robot.turret.stopIntake();
-                follower.followPath(parkPath);
-                robot.turret.stopShootSequence();
-                setPathState(13);
                 break;
         }
     }

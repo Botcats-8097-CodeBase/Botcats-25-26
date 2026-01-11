@@ -24,6 +24,7 @@ import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
 import org.firstinspires.ftc.teamcode.subcomponents.Odometry;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
 import org.firstinspires.ftc.teamcode.utils.BasicRobot;
+import org.firstinspires.ftc.teamcode.utils.TylerMath;
 import org.firstinspires.ftc.teamcode.utils.Vector2D;
 
 import java.util.List;
@@ -72,15 +73,13 @@ public class TeleOpFull extends OpMode {
 
     double[] preset = RobotConstants.fullSpeedPreset;
 
-
-
     @Override
     public void start() {
         super.start();
         et.reset();
 
         if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
-            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, (double) blackboard.get("heading"));
+            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, TylerMath.wrap(((double) blackboard.get("heading"))-180, -180, 180));
             imuOffset = ((double) blackboard.get("heading"));
         } else {
             if (!isRed) {
@@ -125,7 +124,7 @@ public class TeleOpFull extends OpMode {
         }
 
         YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
-        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
+        double yaw = TylerMath.wrap(robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset, 0, 360);
         pTelemetry.addData("Robot Yaw (imu)", yaw);
 
         // pressurising the right trigger slows down the drive train
@@ -166,9 +165,7 @@ public class TeleOpFull extends OpMode {
 
         if (gamepad1.dpadLeftWasPressed()) isConstantPreset = !isConstantPreset;
 
-        if (gamepad1.a) turret.continueShootSequence(preset);
-        else if (isConstantPreset) turret.goToPreset(preset);
-        else turret.stopShootSequence();
+
 
         pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
         pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
@@ -180,6 +177,10 @@ public class TeleOpFull extends OpMode {
 //        if (gamepad2.b) preset = RobotConstants.closestSpeedPreset;
         if (robotPos.getX(DistanceUnit.INCH) > 40) preset = RobotConstants.fullSpeedPreset;
         else preset = RobotConstants.closestSpeedPreset;
+
+        if (gamepad1.a) turret.continueShootSequence(preset);
+        else if (isConstantPreset) turret.goToPreset(preset);
+        else turret.stopShootSequence();
 
         if (!isAutoAiming) {
             if (gamepad1.dpad_down) targetTurretAngle -= 1;
@@ -246,6 +247,7 @@ public class TeleOpFull extends OpMode {
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
+        pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
 
         turret.loop(preset);
 

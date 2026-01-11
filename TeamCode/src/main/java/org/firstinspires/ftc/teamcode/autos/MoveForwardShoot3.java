@@ -137,7 +137,7 @@ public class MoveForwardShoot3 extends OpMode {
         actionTimer = new Timer();
         opmodeTimer.resetTimer();
 
-        robot.init(hardwareMap, isRed);
+        robot.init(hardwareMap);
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
         follower.setStartingPose(startPose);

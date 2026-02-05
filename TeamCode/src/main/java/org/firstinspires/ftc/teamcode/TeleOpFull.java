@@ -55,20 +55,12 @@ public class TeleOpFull extends OpMode {
 
     int id;
 
-    public IMU imu;
     double targetTurretAngle = 0;
     boolean isAutoAiming = true;
 
     ElapsedTime et = new ElapsedTime();
 
     Pose2D initPose = new Pose2D(DistanceUnit.INCH, 20, 0, AngleUnit.DEGREES, 0);
-
-    IMU.Parameters parameters = new IMU.Parameters(
-            new RevHubOrientationOnRobot(
-                    RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                    RevHubOrientationOnRobot.UsbFacingDirection.UP
-            )
-    );
 
     double[] preset = RobotConstants.fullSpeedPreset;
 
@@ -118,14 +110,16 @@ public class TeleOpFull extends OpMode {
         for (LynxModule hub : allHubs) hub.clearBulkCache();
 
         // reset IMU
-        if (gamepad1.y) {
-            imu.resetYaw();
-            imu.initialize(parameters);
-            imuOffset = 0;
-        }
+//        if (gamepad1.y) {
+//
+//            imu.resetYaw();
+//            imu.initialize(parameters);
+//            imuOffset = 0;
+//        }
 
-        YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
-        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
+//        YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
+//        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
+        double yaw = odo.getPose().getHeading(AngleUnit.DEGREES);
         pTelemetry.addData("Robot Yaw (imu)", yaw);
 
         // pressurising the right trigger slows down the drive train
@@ -267,9 +261,9 @@ public class TeleOpFull extends OpMode {
         odo.init(hardwareMap);
 
 
-        imu = hardwareMap.get(IMU.class, "imu");
-        imu.initialize(parameters);
-        imu.resetYaw();
+//        imu = hardwareMap.get(IMU.class, "imu");
+//        imu.initialize(parameters);
+//        imu.resetYaw();
     }
 
     @Override

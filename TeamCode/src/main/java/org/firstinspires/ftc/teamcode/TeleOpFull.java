@@ -110,16 +110,14 @@ public class TeleOpFull extends OpMode {
         for (LynxModule hub : allHubs) hub.clearBulkCache();
 
         // reset IMU
-//        if (gamepad1.y) {
-//
-//            imu.resetYaw();
-//            imu.initialize(parameters);
-//            imuOffset = 0;
-//        }
+        if (gamepad1.y) {
+
+            imuOffset = -odo.getPose().getHeading(AngleUnit.DEGREES);
+        }
 
 //        YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
 //        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
-        double yaw = odo.getPose().getHeading(AngleUnit.DEGREES);
+        double yaw = odo.getPose().getHeading(AngleUnit.DEGREES) + imuOffset;
         pTelemetry.addData("Robot Yaw (imu)", yaw);
 
         // pressurising the right trigger slows down the drive train

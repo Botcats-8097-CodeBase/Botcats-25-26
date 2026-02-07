@@ -18,13 +18,13 @@ public class RobotConstants {
 
     public static String intakeMotorName = "intake";
     public static DcMotorSimple.Direction intakeMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static double intakeMotorPower = 0.75;
+    public static double intakeMotorPower = 1.0;//0.75;
 
     public static String lowColorSensorName = "lowColor";
     public static String highColorSensorName = "highColor";
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartAngle = 59.4;
+    public static double yawTurretStartAngle = 10.3;
     public static double yawTurretMaxAngle = 80;
     public static double yawTurretMinAngle = -40;
 
@@ -48,8 +48,8 @@ public class RobotConstants {
 
 
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
-    public static double[] fullSpeedPreset = {2.3, 0.10};
-    public static double[] autoSpeedPreset = {1.50, 0.70};
-    public static double[] closestSpeedPreset = {1.57, 0.70};
+    public static double[] fullSpeedPreset = {2.1, 1.00};
+    public static double[] autoSpeedPreset = {1.57, 0.70};
+    public static double[] closestSpeedPreset = {1.57, 0.50};
 
 }

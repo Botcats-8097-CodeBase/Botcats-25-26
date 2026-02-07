@@ -3,19 +3,14 @@ package org.firstinspires.ftc.teamcode.subcomponents;
 import static com.qualcomm.robotcore.util.Range.clip;
 import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
 
-import android.graphics.Color;
-
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.RobotConstants;
-import org.firstinspires.ftc.teamcode.utils.NoiseFilter;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
 import org.firstinspires.ftc.teamcode.utils.RunToMotor;
@@ -32,6 +27,7 @@ public class Turret {
     public DcMotor intakeMotor;
     public CustomColorSensor lowColor = new CustomColorSensor();
     public CustomColorSensor highColor = new CustomColorSensor();
+    public boolean useAutoPitch = false;
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
@@ -104,9 +100,6 @@ public class Turret {
                 intakeMotor.setPower(0);
             } else {
                 double currTime = et.milliseconds() - shootStartTimeMs;
-
-                if (!spinnerMotor1.velocityFilter.isDataless())
-                    pitchTurretServo.setPosition(varPreset(-(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity()), preset[1]));
 
                 if (currTime < 500) {
                     clutchServo.setPosition(RobotConstants.clutchEndPos);
@@ -206,13 +199,38 @@ public class Turret {
 
     public void goToPreset(double[] preset) {
         targetPreset = preset;
-        spinnerMotor1.setTargetVelocity(preset[0]);
-        pitchTurretServo.setPosition(preset[1]);
+        goToPreset();
+    }
+
+    public void autoPitch(double x, double y, boolean isRed) {
+        if (!isShooting) return;
+
+        double[] goal = goalPos(isRed);
+        double distance = Math.sqrt(Math.pow(goal[0] - x, 2) + Math.pow(goal[1] - y, 2));
+        double[] preset = (x > 40) ? RobotConstants.fullSpeedPreset : RobotConstants.closestSpeedPreset;
+
+        if (!spinnerMotor1.velocityFilter.isDataless()) {
+            double startPos = preset[1];
+
+            if (x < 40) {
+                double kP = 0.005;
+                startPos += (distance-60) * kP;
+            }
+
+            double error = -(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity());
+
+            double kv = 0.5;
+            double newPos = startPos + error * kv;
+            newPos = clip(newPos, 0.0, 0.8);
+
+            pitchTurretServo.setPosition(newPos);
+        }
     }
 
     public void goToPreset() {
         spinnerMotor1.setTargetVelocity(targetPreset[0]);
-        pitchTurretServo.setPosition(targetPreset[1]);
+        if (!useAutoPitch)
+            pitchTurretServo.setPosition(targetPreset[1]);
     }
 
     public void continueShootSequence(double[] preset) {
@@ -223,16 +241,7 @@ public class Turret {
         }
     }
 
-    // gives spinner speed, and pitch turret position that varies depending on the current velocity
-    // input turret.spinnerMotor1.getVelocity()) and preset
-    public double varPreset(double error, double startPos) {
-        double k = 1;
-        double newPos = startPos + error * k;
-        newPos = clip(newPos, 0.3, 0.82);
-        return newPos;
-    }
-
-    public double autoFace(double x, double y, double yaw, boolean isRed) {
+    public double[] goalPos(boolean isRed) {
         double gx;
         double gy;
         if (isRed) {
@@ -243,7 +252,13 @@ public class Turret {
             gy = -68;
         }
 
-        return TylerMath.wrap(-Math.toDegrees(Math.atan2(gy - y, gx - x)) + yaw + 180, -180, 180);
+        return new double[]{gx, gy};
+    }
+
+    public double autoFace(double x, double y, double yaw, boolean isRed) {
+        double[] g = goalPos(isRed);
+
+        return TylerMath.wrap(-Math.toDegrees(Math.atan2(g[1] - y, g[0] - x)) + yaw + 180, -180, 180);
     }
 
     public void setShootPreset(double[] preset) {

@@ -125,6 +125,7 @@ public class MoveForwardShoot6 extends OpMode {
                 break;
             case 2:
                 robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+                autoPitch();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(3);
@@ -148,6 +149,7 @@ public class MoveForwardShoot6 extends OpMode {
                 break;
             case 5:
                 robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+                autoPitch();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(6);
@@ -173,6 +175,7 @@ public class MoveForwardShoot6 extends OpMode {
                 break;
             case 8:
                 robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+                autoPitch();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(9);
@@ -197,6 +200,7 @@ public class MoveForwardShoot6 extends OpMode {
                 break;
             case 11:
                 robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+                autoPitch();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(12);
@@ -215,6 +219,10 @@ public class MoveForwardShoot6 extends OpMode {
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
+    }
+
+    public void autoPitch() {
+        robot.turret.autoPitch(0, 0, isRed);
     }
 
     @Override
@@ -242,6 +250,7 @@ public class MoveForwardShoot6 extends OpMode {
 
         robot.init(hardwareMap);
         robot.turret.setShootPreset(RobotConstants.autoSpeedPreset);
+        robot.turret.useAutoPitch = true;
 
         follower = Constants.createFollower(hardwareMap);
     }

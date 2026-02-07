@@ -112,6 +112,7 @@ public class TeleOpFull extends OpMode {
     @Override
     public void loop() {
         float dt = (float) et.milliseconds();
+        pTelemetry.addData("dt", dt);
         et.reset();
 
         for (LynxModule hub : allHubs) hub.clearBulkCache();
@@ -167,9 +168,6 @@ public class TeleOpFull extends OpMode {
 
 
 
-        pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
-        pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
-
         odo.update();
         Pose2D robotPos = odo.getPose();
 
@@ -178,9 +176,18 @@ public class TeleOpFull extends OpMode {
         if (robotPos.getX(DistanceUnit.INCH) > 40) preset = RobotConstants.fullSpeedPreset;
         else preset = RobotConstants.closestSpeedPreset;
 
+        turret.useAutoPitch = true;
+
         if (gamepad1.a) turret.continueShootSequence(preset);
         else if (isConstantPreset) turret.goToPreset(preset);
         else turret.stopShootSequence();
+
+        turret.autoPitch(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), isRed);
+
+        pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
+        pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
+        pTelemetry.addData("turret Target Vel", preset[0]);
+        pTelemetry.addData("turret Target Pitch", preset[1]);
 
         if (!isAutoAiming) {
             if (gamepad1.dpad_down) targetTurretAngle -= 1;
@@ -205,21 +212,13 @@ public class TeleOpFull extends OpMode {
 
             Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
             Pose3D camPose = limelight.limePosFace();
-//            telemetry.addData("limeFacingTarget", limeFacingTarget);
             if (limeFacingTarget == null || camPose == null) {
-                if ((getRuntime() - lastTimeSeenLimelight) > 0.8) turret.faceTo(facingTarget);
+                if ((getRuntime() - lastTimeSeenLimelight) > 0.8) {
+                    turret.faceTo(facingTarget);
+
+
+                }
             } else {
-//                if (robotPos.getX(DistanceUnit.INCH) > 40) {
-//                    double limeOffsetFar = 1.5;
-//                    telemetry.addData("usingLimeOffset", true);
-//                    if (isRed) {
-//                        limeFacingTarget += limeOffsetFar;
-//                    } else {
-//                        limeFacingTarget -= limeOffsetFar;
-//                    }
-//                }
-
-
                 double limePosFace = turret.autoFace(camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
                         yaw, isRed);
 
@@ -231,18 +230,15 @@ public class TeleOpFull extends OpMode {
             }
 
 
-            pTelemetry.addData("turret Target Vel", preset[0]);
-            pTelemetry.addData("turret Target Vel 2", preset[1]);
-            pTelemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
-            pTelemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
+
             pTelemetry.addData("facing", facingTarget);
             pTelemetry.addData("facing Current", turret.yawMotor.getCurrentPosition());
-            pTelemetry.addData("color alpha", turret.highColor.lowColorSensor.alpha());
-            float[] hsv = new float[3];
-            Color.RGBToHSV(turret.highColor.lowColorSensor.red(), turret.highColor.lowColorSensor.green(), turret.highColor.lowColorSensor.blue(), hsv);
-            pTelemetry.addData("color h", hsv[0]);
-            pTelemetry.addData("color s", hsv[1]);
-            pTelemetry.addData("color v", hsv[2]);
+//            pTelemetry.addData("color alpha", turret.highColor.lowColorSensor.alpha());
+//            float[] hsv = new float[3];
+//            Color.RGBToHSV(turret.highColor.lowColorSensor.red(), turret.highColor.lowColorSensor.green(), turret.highColor.lowColorSensor.blue(), hsv);
+//            pTelemetry.addData("color h", hsv[0]);
+//            pTelemetry.addData("color s", hsv[1]);
+//            pTelemetry.addData("color v", hsv[2]);
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));

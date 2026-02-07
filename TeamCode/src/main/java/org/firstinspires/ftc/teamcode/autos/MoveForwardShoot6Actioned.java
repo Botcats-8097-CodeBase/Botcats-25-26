@@ -15,10 +15,13 @@
 //import com.qualcomm.robotcore.util.ElapsedTime;
 //
 //import org.firstinspires.ftc.teamcode.RobotConstants;
+//import org.firstinspires.ftc.teamcode.actions.Action;
+//import org.firstinspires.ftc.teamcode.actions.ActionBuilder;
+//import org.firstinspires.ftc.teamcode.actions.ActionManager;
 //import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 //
-//@Autonomous(name = "move forward shoot 12 special")
-//public class MoveForwardShoot6Special extends OpMode {
+//@Autonomous(name = "move forward shoot 3 actioned")
+//public class MoveForwardShoot6Actioned extends OpMode {
 //    JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 //
 //    int id;
@@ -48,13 +51,15 @@
 //    private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE;
 //    private Path scorePreload;
 //    private PathChain parkPath, ethanPath1, ethanPath2, ethanPath3;
+//
+//
 //    public void buildPaths() {
 //        if (!isRed) {
 //            startPose = AutoConstants.blueCloseStartPos;
 //            scorePose = new Pose(53.5, 88, Math.toRadians(135));
 //            parkPose = new Pose(53.5, 40, Math.toRadians(90));
 //        } else {
-//            startPose = new Pose(118.5, 126, Math.toRadians(45));
+//            startPose = AutoConstants.redCloseStartPos;
 //            scorePose = new Pose(90.5, 88, Math.toRadians(45));
 //            parkPose = new Pose(90.5, 40, Math.toRadians(90));
 //            stripXCoordS = 98;
@@ -99,89 +104,73 @@
 //                .build();
 //
 //        ethanPath3 = follower.pathBuilder()
-//                .addPath(new BezierLine(scorePose, scorePose.plus(new Pose(0, 30))))
+//                .addPath(new BezierLine(scorePose, thirdStripS))
 //                .setLinearHeadingInterpolation(scorePose.getHeading(), thirdStripS.getHeading())
+//                .addPath(new BezierLine(thirdStripS, thirdStripE))
+//                .setLinearHeadingInterpolation(thirdStripS.getHeading(), thirdStripE.getHeading())
+//                .addPath(new BezierLine(thirdStripE, scorePose.plus(new Pose(0, intakeOffset))))
+//                .setLinearHeadingInterpolation(thirdStripE.getHeading(), scorePose.getHeading())
 //                .build();
 //    }
 //
-//    public void autonomousPathUpdate() {
-//        switch (pathState) {
-//            case 0:
-//                follower.followPath(scorePreload);
-//                robot.turret.goToPreset(RobotConstants.autoSpeedPreset);
-//                setPathState(1);
-//                break;
-//            case 1:
-//                if(!follower.isBusy()) {
-//                    setPathState(2);
-//                    actionTimer.resetTimer();
-//                }
-//                break;
-//            case 2:
-//                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-//                if (actionTimer.getElapsedTime() > 4000) {
-//                    actionTimer.resetTimer();
-//                    setPathState(3);
-//                }
-//                break;
-//            case 3:
-//                robot.turret.stopIntake();
-//                robot.turret.stopShootSequence();
-//                if (actionTimer.getElapsedTime() > 500) {
-//                    follower.followPath(ethanPath1);
-//                    setPathState(4);
-//                }
-//                break;
-//            case 4:
-//                robot.turret.triggerIntake();
-//                if (!follower.isBusy()) {
-//                    setPathState(5);
+//    public Action buildAction() {
+//        return new ActionBuilder()
+//                .doNow(() -> {
+//                    follower.followPath(scorePreload);
+//                    robot.turret.goToPreset(RobotConstants.autoSpeedPreset);
+//                    telemetry.addData("step", 1);
+//                })
+//                .waitUntil(() -> !follower.isBusy())
+//                .loopFor(t -> {
+//                    robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+//                    telemetry.addData("step", 2);
+//                    autoPitch();
+//                }, 4)
+//                .loopFor(t -> {
 //                    robot.turret.stopIntake();
-//                    actionTimer.resetTimer();
-//                }
-//                break;
-//            case 5:
-//                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-//                if (actionTimer.getElapsedTime() > 4000) {
-//                    actionTimer.resetTimer();
-//                    setPathState(6);
-//                }
-//                break;
-//// todo START HERE PASTE
-//            case 6:
-//                robot.turret.stopIntake();
-//                robot.turret.stopShootSequence();
-//                if (actionTimer.getElapsedTime() > 500) {
-//                    follower.followPath(ethanPath2);
-//                    setPathState(7);
-//                }
-//                break;
-//            case 7:
-//                robot.turret.triggerIntake();
-//                if (!follower.isBusy()) {
-//                    setPathState(8);
-//
+//                    robot.turret.stopShootSequence();
+//                }, 0.5)
+//                .doNow(() -> follower.followPath(ethanPath1))
+//                .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
+//                .doNow(() -> {
 //                    robot.turret.stopIntake();
-//                    actionTimer.resetTimer();
-//                }
-//                break;
-//            case 8:
-//                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-//                if (actionTimer.getElapsedTime() > 4000) {
-//                    actionTimer.resetTimer();
-//                    setPathState(9);
-//                }
-//                break;
-//
-//            case 9:
-//                robot.turret.stopIntake();
-//                robot.turret.stopShootSequence();
-//                if (actionTimer.getElapsedTime() > 500) {
-//                    follower.followPath(ethanPath3);
-//                    setPathState(10);
-//                }
-//                break;
-//        }
+//                })
+//                .loopFor(t -> {
+//                    robot.turret.continueShootSequence();
+//                    autoPitch();
+//                }, 4)
+//                .loopFor(t -> {
+//                    robot.turret.stopIntake();
+//                    robot.turret.stopShootSequence();
+//                }, 0.5)
+//                .doNow(() -> follower.followPath(ethanPath2))
+//                .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
+//                .doNow(() -> {
+//                    robot.turret.stopIntake();
+//                })
+//                .loopFor(t -> {
+//                    robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+//                    autoPitch();
+//                }, 4)
+//                .loopFor(t -> {
+//                    robot.turret.stopIntake();
+//                    robot.turret.stopShootSequence();
+//                }, 0.5)
+//                .doNow(() -> follower.followPath(ethanPath3))
+//                .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
+//                .doNow(() -> {
+//                    robot.turret.stopIntake();
+//                })
+//                .loopFor(t -> {
+//                    robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
+//                    autoPitch();
+//                }, 4)
+//                .doNow(() -> {
+//                    robot.turret.stopIntake();
+//                    follower.followPath(parkPath);
+//                    robot.turret.stopShootSequence();
+//                })
+//                .build();
 //    }
 //
 //    public void setPathState(int pState) {
@@ -189,17 +178,22 @@
 //        pathTimer.resetTimer();
 //    }
 //
+//    public void autoPitch() {
+//        robot.turret.autoPitch(0, 0, isRed);
+//    }
+//
 //    @Override
 //    public void loop() {
+//        double dt = et.milliseconds();
+//        et.reset();
+//        pTelemetry.addData("dt", dt);
 //
 //        follower.update();
-//        autonomousPathUpdate();
 //        TylerDrawing.draw(follower);
 //
 //        pTelemetry.addData("turret Target Vel", RobotConstants.autoSpeedPreset[0]);
 //        pTelemetry.addData("turret Current Vel", robot.turret.spinnerMotor1.getVelocity());
-//
-//        telemetry.addData("path state", pathState);
+//        ActionManager.update();
 //        telemetry.update();
 //
 //        robot.update();
@@ -210,12 +204,16 @@
 //        pathTimer = new Timer();
 //        opmodeTimer = new Timer();
 //        actionTimer = new Timer();
+//        et = new ElapsedTime();
 //        opmodeTimer.resetTimer();
 //
 //        robot.init(hardwareMap);
 //        robot.turret.setShootPreset(RobotConstants.autoSpeedPreset);
+//        robot.turret.useAutoPitch = true;
 //
 //        follower = Constants.createFollower(hardwareMap);
+//
+//        ActionManager.schedule(buildAction());
 //    }
 //
 //    @Override

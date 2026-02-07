@@ -40,9 +40,10 @@ public class TurretTest extends OpMode {
             hub.clearBulkCache();
         }
 
+        turret.setShootPreset(new double[]{targetSpeed, targetServoAngle});
 
         if (gamepad1.a) {
-            turret.continueShootSequence(new double[]{targetSpeed, targetServoAngle});
+            turret.continueShootSequence();
         } else {
             turret.stopShootSequence();
         }

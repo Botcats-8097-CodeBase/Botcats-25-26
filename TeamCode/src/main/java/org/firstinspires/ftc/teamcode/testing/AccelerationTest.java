@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.utils.Vector2D;
 import java.util.List;
 
 @TeleOp(name = "test acceleration")
-public class AccelerationTester extends OpMode {
+public class AccelerationTest extends OpMode {
 
     List<LynxModule> allHubs;
 

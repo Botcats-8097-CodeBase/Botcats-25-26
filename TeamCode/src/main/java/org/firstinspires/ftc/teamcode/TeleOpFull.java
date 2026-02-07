@@ -19,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.actions.ActionManager;
 import org.firstinspires.ftc.teamcode.subcomponents.CustomColorSensor;
 import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
 import org.firstinspires.ftc.teamcode.subcomponents.Odometry;
@@ -73,39 +74,7 @@ public class TeleOpFull extends OpMode {
 
     double[] preset = RobotConstants.fullSpeedPreset;
 
-    @Override
-    public void start() {
-        super.start();
-        et.reset();
 
-        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
-            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, TylerMath.wrap(((double) blackboard.get("heading"))-180, -180, 180));
-            imuOffset = ((double) blackboard.get("heading"));
-        } else {
-            if (!isRed) {
-                if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
-                } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
-                }
-
-            } else {
-                if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
-                } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
-                }
-
-            }
-        }
-        if (!isRed) {
-            yawOffset = 90;
-        } else {
-            yawOffset = -90;
-        }
-
-        odo.setPose(initPose);
-    }
 
     double lastTimeSeenLimelight = 0;
 
@@ -118,7 +87,7 @@ public class TeleOpFull extends OpMode {
         for (LynxModule hub : allHubs) hub.clearBulkCache();
 
         // reset IMU
-        if (gamepad1.y) {
+        if (gamepad1.yWasPressed()) {
             imu.resetYaw();
             imu.initialize(parameters);
             imuOffset = 0;
@@ -171,23 +140,14 @@ public class TeleOpFull extends OpMode {
         odo.update();
         Pose2D robotPos = odo.getPose();
 
-//        if (gamepad2.a) preset = RobotConstants.fullSpeedPreset;
-//        if (gamepad2.b) preset = RobotConstants.closestSpeedPreset;
-        if (robotPos.getX(DistanceUnit.INCH) > 40) preset = RobotConstants.fullSpeedPreset;
-        else preset = RobotConstants.closestSpeedPreset;
-
-        turret.useAutoPitch = true;
-
-        if (gamepad1.a) turret.continueShootSequence(preset);
-        else if (isConstantPreset) turret.goToPreset(preset);
+        if (gamepad1.a) turret.continueShootSequence();
+        else if (isConstantPreset) turret.spinUp();
         else turret.stopShootSequence();
-
-        turret.autoPitch(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), isRed);
 
         pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
         pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
-        pTelemetry.addData("turret Target Vel", preset[0]);
-        pTelemetry.addData("turret Target Pitch", preset[1]);
+        pTelemetry.addData("turret Target Vel", turret.getCurrentTargets()[0]);
+        pTelemetry.addData("turret Target Pitch", turret.getCurrentTargets()[1]);
 
         if (!isAutoAiming) {
             if (gamepad1.dpad_down) targetTurretAngle -= 1;
@@ -207,20 +167,22 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_up) RobotConstants.yawTurretStartAngle -= 1;
 
 
-            double facingTarget = turret.autoFace(robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw, isRed);
-            pTelemetry.addData("facingTarget", facingTarget);
 
-            Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
+            double limePosFace = turret.autoFace();
+
             Pose3D camPose = limelight.limePosFace();
-            if (limeFacingTarget == null || camPose == null) {
+            if (camPose == null) {
                 if ((getRuntime() - lastTimeSeenLimelight) > 0.8) {
+                    turret.updatePose(new double[]{robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw});
+                    double facingTarget = turret.autoFace();
+                    pTelemetry.addData("facingTarget", facingTarget);
                     turret.faceTo(facingTarget);
 
-
+                    pTelemetry.addData("distError", turret.distError);
                 }
             } else {
-                double limePosFace = turret.autoFace(camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
-                        yaw, isRed);
+                turret.updatePose(new double[]{camPose.getPosition().x * 39.37, camPose.getPosition().y * 39.37,
+                        yaw});
 
                 lastTimeSeenLimelight = getRuntime();
                 turret.faceTo(limePosFace);
@@ -228,26 +190,17 @@ public class TeleOpFull extends OpMode {
                 pTelemetry.addData("lime pos x", camPose.getPosition().x * 39.37);
                 pTelemetry.addData("lime pos y", camPose.getPosition().y * 39.37);
             }
-
-
-
-            pTelemetry.addData("facing", facingTarget);
-            pTelemetry.addData("facing Current", turret.yawMotor.getCurrentPosition());
-//            pTelemetry.addData("color alpha", turret.highColor.lowColorSensor.alpha());
-//            float[] hsv = new float[3];
-//            Color.RGBToHSV(turret.highColor.lowColorSensor.red(), turret.highColor.lowColorSensor.green(), turret.highColor.lowColorSensor.blue(), hsv);
-//            pTelemetry.addData("color h", hsv[0]);
-//            pTelemetry.addData("color s", hsv[1]);
-//            pTelemetry.addData("color v", hsv[2]);
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
         pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
 
-        turret.loop(preset);
+        turret.loop();
 
         pTelemetry.update();
+
+        ActionManager.update();
 
     }
 
@@ -292,5 +245,40 @@ public class TeleOpFull extends OpMode {
         if (gamepad1.yWasPressed()) {
             turret.yawTurretEncoder.zeroHere();
         }
+    }
+
+    @Override
+    public void start() {
+        super.start();
+        et.reset();
+
+        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
+            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, TylerMath.wrap(((double) blackboard.get("heading"))-180, -180, 180));
+            imuOffset = ((double) blackboard.get("heading"));
+        } else {
+            if (!isRed) {
+                if (isClose) {
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
+                } else {
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
+                }
+
+            } else {
+                if (isClose) {
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
+                } else {
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
+                }
+
+            }
+        }
+        if (!isRed) {
+            yawOffset = 90;
+        } else {
+            yawOffset = -90;
+        }
+
+        odo.setPose(initPose);
+        turret.setGoalColor(isRed);
     }
 }

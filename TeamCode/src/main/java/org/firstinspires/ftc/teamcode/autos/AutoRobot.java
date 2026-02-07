@@ -21,18 +21,6 @@ public class AutoRobot {
     }
 
     public void update() {
-        turret.loop(RobotConstants.autoSpeedPreset);
-    }
-
-    public void faceTarget(Pose pose, boolean isRed) {
-        turret.autoFace(pose.getX() - 72, pose.getY() - 72, pose.getHeading() - 90, isRed);
-    }
-
-    public boolean isShooting() {
-        return turret.currentlyShooting();
-    }
-
-    public void shootSequenceUpdate() {
-
+        turret.loop();
     }
 }

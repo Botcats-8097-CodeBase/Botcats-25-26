@@ -9,7 +9,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
@@ -27,16 +29,255 @@ public class Turret {
     public DcMotor intakeMotor;
     public CustomColorSensor lowColor = new CustomColorSensor();
     public CustomColorSensor highColor = new CustomColorSensor();
-    public boolean useAutoPitch = false;
+
+    public double distError = 0;
 
     ElapsedTime et = new ElapsedTime();
     ElapsedTime yawTimer = new ElapsedTime();
 
     double shootStartTimeMs = -1;
     boolean isShooting = false;
-    double[] targetPreset = {0, 0};
+    double[] targetPreset = {-1, -1};
+    double[] currentTargets = {0, 0};
+    boolean isRed = false;
+    boolean useDistError = true;
+
+    boolean isSpinningUp = false;
+
+    double[] robotPos = {0, 0, 0};
 
     public Turret() {}
+
+    public void updatePose(double[] pose) {
+        robotPos = pose;
+    }
+
+    public void loop() {
+        double dt = yawTimer.seconds();
+        yawTimer.reset();
+
+        //TODO: Make this better in the future
+        double inputYaw = yawTurretEncoder.getAngle0to360();
+        if (inputYaw > 270) {
+            inputYaw -= 360;
+        }
+        yawMotor.update(inputYaw);
+
+        spinnerMotor1.update();
+        spinnerMotor2.setPower(spinnerMotor1.getPower());
+
+        if ((spinnerMotor1.isAtTargetVelocity() || shootStartTimeMs != -1) && isShooting) {
+            //this code is made when we want a shoot sequence (we don't need this right now)
+            if (shootStartTimeMs == -1) {
+                shootStartTimeMs = et.milliseconds();
+                intakeMotor.setPower(0);
+            } else {
+                double currTime = et.milliseconds() - shootStartTimeMs;
+
+                if (currTime < 500) {
+                    clutchServo.setPosition(RobotConstants.clutchEndPos);
+                } else if (currTime < 1000) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                } else if (currTime < 1250) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.3);
+                }
+            }
+        }
+
+        double[] basePreset = (robotPos[0] > 40) ? RobotConstants.fullSpeedPreset.clone() : RobotConstants.closestSpeedPreset.clone();
+        if (isShooting) {
+            double[] goal = goalPos();
+            double baseDist = 77;
+            distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
+
+
+            if (targetPreset[0] == -1) {
+                double shootSpeed = basePreset[0];
+
+                if (robotPos[0] < 40 && useDistError) {
+                    double kS = 0.006;
+                    shootSpeed += distError * kS;
+                }
+
+                spinnerMotor1.setTargetVelocity(shootSpeed);
+
+                currentTargets[0] = shootSpeed;
+            } else {
+                pitchTurretServo.setPosition(targetPreset[0]);
+            }
+
+            if (targetPreset[1] == -1) {
+                if (!spinnerMotor1.velocityFilter.isDataless()) {
+                    double pos = basePreset[1];
+
+                    if (robotPos[0] < 40 && useDistError) {
+                        double kP = 0.005;
+                        pos += distError * kP;
+                    }
+
+                    double error = -(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity());
+
+                    double kv = 0.5;
+                    pos += error * kv;
+                    pos = clip(pos, 0.0, 0.8);
+
+                    pitchTurretServo.setPosition(pos);
+
+                    currentTargets[1] = pos;
+                }
+            } else {
+                pitchTurretServo.setPosition(targetPreset[1]);
+            }
+
+
+        } else if (isSpinningUp) {
+            spinnerMotor1.setTargetVelocity(basePreset[0]);
+            pitchTurretServo.setPosition(basePreset[1]);
+        }
+
+    }
+
+    boolean isFirstTrigger = true;
+    public void reverseIntake() {
+        if (!isShooting) {
+            if (isFirstTrigger) {
+                isFirstTrigger = false;
+            }
+            isFirstStop = true;
+
+            clutchServo.setPosition(RobotConstants.clutchEndPos);
+            intakeMotor.setPower(-RobotConstants.intakeMotorPower);
+        }
+    }
+
+    public void triggerIntake() {
+        if (!isShooting) {
+            isFirstStop = true;
+            if (isFirstTrigger) {
+                isFirstTrigger = false;
+                clutchTimer.reset();
+            }
+
+
+            if (highColor.checkColor() || lowColor.checkColor()) {
+                clutchServo.setPosition(RobotConstants.clutchStartPos);
+            }
+
+            if (clutchTimer.milliseconds() > 300) {
+                intakeMotor.setPower(RobotConstants.intakeMotorPower);
+            }
+        }
+    }
+
+    boolean isFirstStop;
+    public void stopIntake() {
+        if (!isShooting) {
+            if (isFirstStop) {
+                isFirstStop = false;
+                clutchTimer.reset();
+            }
+            intakeMotor.setPower(0);
+            isFirstTrigger = true;
+
+            if (clutchTimer.milliseconds() > 200) {
+                if (!lowColor.checkColor() && !highColor.checkColor())
+                    clutchServo.setPosition(RobotConstants.clutchEndPos);
+            }
+        }
+    }
+
+
+    private final ElapsedTime clutchTimer = new ElapsedTime();
+    private int overrideState = 0;
+
+    public void manualOverride() {
+        switch (overrideState) {
+            case 0:
+                clutchServo.setPosition(RobotConstants.clutchEndPos);
+                clutchTimer.reset();
+                overrideState = 1;
+                break;
+
+            case 1:
+                if (clutchTimer.milliseconds() >= 200) {
+                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                    overrideState = 2;
+                }
+                break;
+
+            case 2:
+                intakeMotor.setPower(RobotConstants.intakeMotorPower);
+                break;
+        }
+    }
+
+    public void stopManualOverride() {
+        overrideState = 0;
+    }
+
+    public void faceTo(double yaw) {
+        yaw = TylerMath.wrap(yaw, 0, 360);
+        if (yaw > 270) yaw -= 360;
+        yaw = clip(yaw, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
+
+        yawMotor.setTargetPosition(yaw);
+    }
+
+    public void spinUp() {
+        isSpinningUp = true;
+    }
+
+    public double[] getCurrentTargets() {
+        return currentTargets;
+    }
+
+    public void continueShootSequence() {
+        if (!isShooting) {
+            isShooting = true;
+            isSpinningUp = false;
+            shootStartTimeMs = -1;
+        }
+    }
+
+    public double[] goalPos() {
+        return isRed ? new double[]{-72, 68} : new double[]{-72, -68};
+    }
+
+    public void setShootPreset(double[] preset) {
+        this.targetPreset = preset;
+    }
+
+    public void stopShootSequence() {
+        isShooting = false;
+        isSpinningUp = false;
+        stopSpinner();
+    }
+
+    public void setGoalColor(boolean isRed) {
+        this.isRed = isRed;
+    }
+
+    public boolean currentlyShooting() {
+        return isShooting;
+    }
+
+    public void stopSpinner() {
+        spinnerMotor1.stop();
+    }
+
+    public double getCurrentFacing() {
+        return yawMotor.getCurrentPosition();
+    }
+
+    public void useDistError(boolean useDistError) {
+        this.useDistError = useDistError;
+    }
+
+    public double autoFace() {
+        double[] g = goalPos();
+
+        return TylerMath.wrap(-Math.toDegrees(Math.atan2(g[1] - robotPos[1], g[0] - robotPos[0])) + robotPos[2] + 180, -180, 180);
+    }
 
     public void init(HardwareMap hardwareMap) {
         yawMotor.init(hardwareMap, RobotConstants.yawTurretMotorName);
@@ -76,233 +317,5 @@ public class Turret {
 
         et.reset();
         yawTimer.reset();
-    }
-
-    public void loop(double[] preset) {
-        targetPreset = preset;
-        double dt = yawTimer.seconds();
-        yawTimer.reset();
-
-        //TODO: Make this better in the future
-        double inputYaw = yawTurretEncoder.getAngle0to360();
-        if (inputYaw > 270) {
-            inputYaw -= 360;
-        }
-        yawMotor.update(inputYaw);
-
-        spinnerMotor1.update();
-        spinnerMotor2.setPower(spinnerMotor1.getPower());
-
-        if ((spinnerMotor1.isAtTargetVelocity() || shootStartTimeMs != -1) && isShooting) {
-            //this code is made when we want a shoot sequence (we don't need this right now)
-            if (shootStartTimeMs == -1) {
-                shootStartTimeMs = et.milliseconds();
-                intakeMotor.setPower(0);
-            } else {
-                double currTime = et.milliseconds() - shootStartTimeMs;
-
-                if (currTime < 500) {
-                    clutchServo.setPosition(RobotConstants.clutchEndPos);
-                } else if (currTime < 1000) {
-                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
-                } else if (currTime < 1250) {
-                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.3);
-                }
-            }
-        }
-    }
-
-    boolean isFirstTrigger = true;
-    public void reverseIntake() {
-        if (!isShooting) {
-            if (isFirstTrigger) {
-                clutchServo.setPosition(RobotConstants.clutchEndPos);
-                isFirstTrigger = false;
-            }
-            isFirstStop = true;
-            intakeMotor.setPower(-RobotConstants.intakeMotorPower);
-        }
-    }
-
-    public void triggerIntake() {
-        if (!isShooting) {
-            isFirstStop = true;
-            if (isFirstTrigger) {
-                isFirstTrigger = false;
-                clutchTimer.reset();
-            }
-
-            if (lowColor.checkColor()) {
-                intakeMotor.setPower(RobotConstants.intakeMotorPower - 0.3);
-            } else {
-                intakeMotor.setPower(RobotConstants.intakeMotorPower);
-            }
-            if (highColor.checkColor()){
-                clutchServo.setPosition(RobotConstants.clutchStartPos);
-            }
-        }
-    }
-
-
-    private final ElapsedTime clutchTimer = new ElapsedTime();
-    private int overrideState = 0;
-
-    public void manualOverride() {
-        switch (overrideState) {
-            case 0:
-                clutchServo.setPosition(RobotConstants.clutchEndPos);
-                clutchTimer.reset();
-                overrideState = 1;
-                break;
-
-            case 1:
-                if (clutchTimer.milliseconds() >= 200) {
-                    intakeMotor.setPower(RobotConstants.intakeMotorPower);
-                    overrideState = 2;
-                }
-                break;
-
-            case 2:
-                intakeMotor.setPower(RobotConstants.intakeMotorPower);
-                break;
-        }
-    }
-
-    public void stopManualOverride() {
-        overrideState = 0;
-    }
-
-    boolean isFirstStop;
-    public void stopIntake() {
-        if (!isShooting) {
-            if (isFirstStop) {
-                isFirstStop = false;
-                clutchTimer.reset();
-            }
-            intakeMotor.setPower(0);
-            isFirstTrigger = true;
-
-            if (clutchTimer.milliseconds() > 200) {
-                if (!lowColor.checkColor() && !highColor.checkColor())
-                    clutchServo.setPosition(RobotConstants.clutchEndPos);
-            }
-        }
-    }
-
-    public void faceTo(double yaw) {
-        yaw = TylerMath.wrap(yaw, 0, 360);
-        if (yaw > 270) yaw -= 360;
-        yaw = clip(yaw, RobotConstants.yawTurretMinAngle, RobotConstants.yawTurretMaxAngle);
-
-        yawMotor.setTargetPosition(yaw);
-    }
-
-    public void goToPreset(double[] preset) {
-        targetPreset = preset;
-        goToPreset();
-    }
-
-    public void autoPitch(double x, double y, boolean isRed) {
-        if (!isShooting) return;
-
-        double[] goal = goalPos(isRed);
-        double distance = Math.sqrt(Math.pow(goal[0] - x, 2) + Math.pow(goal[1] - y, 2));
-        double[] preset = (x > 40) ? RobotConstants.fullSpeedPreset : RobotConstants.closestSpeedPreset;
-
-        if (!spinnerMotor1.velocityFilter.isDataless()) {
-            double startPos = preset[1];
-
-            if (x < 40) {
-                double kP = 0.005;
-                startPos += (distance-60) * kP;
-            }
-
-            double error = -(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity());
-
-            double kv = 0.5;
-            double newPos = startPos + error * kv;
-            newPos = clip(newPos, 0.0, 0.8);
-
-            pitchTurretServo.setPosition(newPos);
-        }
-    }
-
-    public void goToPreset() {
-        spinnerMotor1.setTargetVelocity(targetPreset[0]);
-        if (!useAutoPitch)
-            pitchTurretServo.setPosition(targetPreset[1]);
-    }
-
-    public void continueShootSequence(double[] preset) {
-        if (!isShooting) {
-            isShooting = true;
-            shootStartTimeMs = -1;
-            goToPreset(preset);
-        }
-    }
-
-    public double[] goalPos(boolean isRed) {
-        double gx;
-        double gy;
-        if (isRed) {
-            gx = -72;
-            gy = 68;
-        } else {
-            gx = -72;
-            gy = -68;
-        }
-
-        return new double[]{gx, gy};
-    }
-
-    public double autoFace(double x, double y, double yaw, boolean isRed) {
-        double[] g = goalPos(isRed);
-
-        return TylerMath.wrap(-Math.toDegrees(Math.atan2(g[1] - y, g[0] - x)) + yaw + 180, -180, 180);
-    }
-
-    public void setShootPreset(double[] preset) {
-        this.targetPreset = preset;
-    }
-
-    public void stopShootSequence() {
-        isShooting = false;
-        stopSpinner();
-    }
-
-    public boolean currentlyShooting() {
-        return isShooting;
-    }
-
-    public void stopSpinner() {
-        spinnerMotor1.stop();
-    }
-
-    public double getCurrentFacing() {
-        return yawMotor.getCurrentPosition();
-    }
-
-    private Double lastAngle0to360 = null;
-    private double continuousAngleDeg = 0;
-    public double getContinuousTurretAngle() {
-        double current = yawTurretEncoder.getAngle180to180();
-
-        if (lastAngle0to360 != null) {
-            double delta = current - lastAngle0to360;
-
-            if (delta > 180) delta -= 360;
-            if (delta < -180) delta += 360;
-
-            continuousAngleDeg += delta;
-        }
-
-        lastAngle0to360 = current;
-        return continuousAngleDeg;
-    }
-
-    private double shortestAngleDiff(double target, double current) {
-        double diff = target - current;
-        diff = normalize180(diff);
-        return diff;
     }
 }

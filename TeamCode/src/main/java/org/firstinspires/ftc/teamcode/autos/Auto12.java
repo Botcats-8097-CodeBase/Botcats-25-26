@@ -14,13 +14,14 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "move forward shoot 12")
-public class MoveForwardShoot6 extends OpMode {
+@Autonomous(name = "12 auto")
+public class Auto12 extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     int id;
@@ -114,7 +115,7 @@ public class MoveForwardShoot6 extends OpMode {
         switch (pathState) {
             case 0:
                 follower.followPath(scorePreload);
-                robot.turret.goToPreset(RobotConstants.autoSpeedPreset);
+                robot.turret.spinUp();
                 setPathState(1);
                 break;
             case 1:
@@ -124,8 +125,7 @@ public class MoveForwardShoot6 extends OpMode {
                 }
                 break;
             case 2:
-                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-                autoPitch();
+                robot.turret.continueShootSequence();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(3);
@@ -148,8 +148,7 @@ public class MoveForwardShoot6 extends OpMode {
                 }
                 break;
             case 5:
-                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-                autoPitch();
+                robot.turret.continueShootSequence();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(6);
@@ -174,8 +173,7 @@ public class MoveForwardShoot6 extends OpMode {
                 }
                 break;
             case 8:
-                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-                autoPitch();
+                robot.turret.continueShootSequence();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(9);
@@ -199,8 +197,7 @@ public class MoveForwardShoot6 extends OpMode {
                 }
                 break;
             case 11:
-                robot.turret.continueShootSequence(RobotConstants.autoSpeedPreset);
-                autoPitch();
+                robot.turret.continueShootSequence();
                 if (actionTimer.getElapsedTime() > 4000) {
                     actionTimer.resetTimer();
                     setPathState(12);
@@ -221,10 +218,6 @@ public class MoveForwardShoot6 extends OpMode {
         pathTimer.resetTimer();
     }
 
-    public void autoPitch() {
-        robot.turret.autoPitch(0, 0, isRed);
-    }
-
     @Override
     public void loop() {
 
@@ -232,12 +225,12 @@ public class MoveForwardShoot6 extends OpMode {
         autonomousPathUpdate();
         TylerDrawing.draw(follower);
 
-        pTelemetry.addData("turret Target Vel", RobotConstants.autoSpeedPreset[0]);
         pTelemetry.addData("turret Current Vel", robot.turret.spinnerMotor1.getVelocity());
 
         telemetry.addData("path state", pathState);
         telemetry.update();
 
+        robot.turret.updatePose(new double[]{0, 0, 0});
         robot.update();
     }
 
@@ -249,8 +242,7 @@ public class MoveForwardShoot6 extends OpMode {
         opmodeTimer.resetTimer();
 
         robot.init(hardwareMap);
-        robot.turret.setShootPreset(RobotConstants.autoSpeedPreset);
-        robot.turret.useAutoPitch = true;
+        robot.turret.useDistError(false);
 
         follower = Constants.createFollower(hardwareMap);
     }

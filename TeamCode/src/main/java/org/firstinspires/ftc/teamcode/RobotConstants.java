@@ -25,7 +25,7 @@ public class RobotConstants {
 
     public static String yawTurretMotorName = "yawTurret";
     public static double yawTurretStartAngle = 10.3;
-    public static double yawTurretMaxAngle = 200;
+    public static double yawTurretMaxAngle = 150;
     public static double yawTurretMinAngle = -40;
 
     public static String yawTurretEncoderName = "yawTurretEncoder";
@@ -42,13 +42,13 @@ public class RobotConstants {
     // if we want free spin but disengaged, value = 0.67
     // if we want locked spin and disengaged, value = 0.68
     public static double clutchEndPos = 0.61;
-    public static String pusherServoName = "pusher";
-    public static double pusherStartPos = 0.7;
-    public static double pusherEndPos = 0.0;
 
+    public static String blockerServoName = "blocker";
+    public static double blockerBlockingPos = 0.108;
+    public static double blockerShootingPos = 0.42;
 
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
-    public static double[] fullSpeedPreset = {2.1, 1.00};
-    public static double[] closestSpeedPreset = {1.57, 0.50};
+    public static double[] fullSpeedPreset = {2.15, 0.70};
+    public static double[] closestSpeedPreset = {1.40, 0.50};
 
 }

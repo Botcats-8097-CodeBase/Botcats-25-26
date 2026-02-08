@@ -15,8 +15,34 @@ import org.firstinspires.ftc.teamcode.RobotConstants;
 
 import java.util.List;
 
+
 @Configurable
 public class Limelight {
+    public enum MosaicPattern {
+        PPG(0),
+        PGP(1),
+        GPP(2);
+
+        private final int value;
+
+        MosaicPattern(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return this.value;
+        }
+
+        public static MosaicPattern getPattern(int index) {
+            for (MosaicPattern value : MosaicPattern.values()) {
+                if (index == value.value) {
+                    return value;
+                }
+            }
+            return null;
+        }
+    }
+
     private Limelight3A limelight;
     double filteredTx = 0;
 
@@ -63,18 +89,23 @@ public class Limelight {
         return null;
     }
 
-    public int limeScanID() {
+    public static double[] offsetTurret(double yaw, double distance) {
+        double radian = Math.toRadians(yaw);
+        return new double[]{Math.cos(radian) * distance, Math.sin(radian) * distance};
+    }
+
+    public MosaicPattern getMosaicPattern() {
         LLResult result = limelight.getLatestResult();
         if (result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
 
             for (LLResultTypes.FiducialResult fr : fiducialResults) {
                 if (fr.getFiducialId() < 24 && fr.getFiducialId() > 20) {
-                    return fr.getFiducialId();
+                    return MosaicPattern.getPattern(fr.getFiducialId() - 21);
                 }
             }
         }
-        return 0;
+        return null;
     }
 
     public boolean limeNullCheck() {

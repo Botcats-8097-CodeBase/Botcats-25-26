@@ -27,6 +27,7 @@ public class Turret {
     public Servo pitchTurretServo;
     public Servo clutchServo;
     public DcMotor intakeMotor;
+    public Servo blockerServo;
     public CustomColorSensor lowColor = new CustomColorSensor();
     public CustomColorSensor highColor = new CustomColorSensor();
 
@@ -75,6 +76,7 @@ public class Turret {
                 double currTime = et.milliseconds() - shootStartTimeMs;
 
                 if (currTime < 500) {
+                    blockerServo.setPosition(RobotConstants.blockerShootingPos);
                     clutchServo.setPosition(RobotConstants.clutchEndPos);
                 } else if (currTime < 1000) {
                     intakeMotor.setPower(RobotConstants.intakeMotorPower);
@@ -89,12 +91,12 @@ public class Turret {
             double[] goal = goalPos();
             double baseDist = 77;
             distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
-
+            boolean isClose = robotPos[0] < 40;
 
             if (targetPreset[0] == -1) {
                 double shootSpeed = basePreset[0];
 
-                if (robotPos[0] < 40 && useDistError) {
+                if (isClose && useDistError) {
                     double kS = 0.006;
                     shootSpeed += distError * kS;
                 }
@@ -110,16 +112,16 @@ public class Turret {
                 if (!spinnerMotor1.velocityFilter.isDataless()) {
                     double pos = basePreset[1];
 
-                    if (robotPos[0] < 40 && useDistError) {
+                    if (isClose && useDistError) {
                         double kP = 0.005;
                         pos += distError * kP;
                     }
 
-                    double error = -(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity());
+                    double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
 
-                    double kv = 0.5;
+                    double kv = isClose ? 0.1 : 0.3;
                     pos += error * kv;
-                    pos = clip(pos, 0.0, 0.8);
+                    pos = clip(pos, 0.0, 1.0);
 
                     pitchTurretServo.setPosition(pos);
 
@@ -128,11 +130,11 @@ public class Turret {
             } else {
                 pitchTurretServo.setPosition(targetPreset[1]);
             }
-
-
         } else if (isSpinningUp) {
             spinnerMotor1.setTargetVelocity(basePreset[0]);
             pitchTurretServo.setPosition(basePreset[1]);
+        } else {
+            blockerServo.setPosition(RobotConstants.blockerBlockingPos);
         }
 
     }
@@ -314,6 +316,8 @@ public class Turret {
 
         lowColor.init(hardwareMap, RobotConstants.lowColorSensorName);
         highColor.init(hardwareMap, RobotConstants.highColorSensorName);
+
+        blockerServo = hardwareMap.get(Servo.class, RobotConstants.blockerServoName);
 
         et.reset();
         yawTimer.reset();

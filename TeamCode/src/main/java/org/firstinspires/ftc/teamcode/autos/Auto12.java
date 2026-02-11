@@ -59,6 +59,7 @@ public class Auto12 extends OpMode {
             intakeOffset = 5;
             intakeAngle = 0;
 
+            robot.turret.presetOffset = new double[]{0.0, 0.1};
         }
         firstStripS = new Pose(stripXCoordS, 85, Math.toRadians(intakeAngle));
         firstStripE = new Pose(stripXCoordE, 85, Math.toRadians(intakeAngle));

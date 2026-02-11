@@ -40,6 +40,7 @@ public class Turret {
     boolean isShooting = false;
     double[] targetPreset = {-1, -1};
     double[] currentTargets = {0, 0};
+    public double[] presetOffset = {0, 0};
     boolean isRed = false;
     boolean useDistError = true;
 
@@ -101,6 +102,9 @@ public class Turret {
                     shootSpeed += distError * kS;
                 }
 
+                shootSpeed += presetOffset[0];
+
+
                 spinnerMotor1.setTargetVelocity(shootSpeed);
 
                 currentTargets[0] = shootSpeed;
@@ -122,6 +126,8 @@ public class Turret {
                     double kv = isClose ? 0.1 : 0.3;
                     pos += error * kv;
                     pos = clip(pos, 0.0, 1.0);
+
+                    pos += presetOffset[1];
 
                     pitchTurretServo.setPosition(pos);
 

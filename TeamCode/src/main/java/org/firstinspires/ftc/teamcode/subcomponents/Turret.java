@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subcomponents;
 import static com.qualcomm.robotcore.util.Range.clip;
 import static org.firstinspires.ftc.teamcode.utils.TylerMath.normalize180;
 
+import com.bylazar.telemetry.JoinedTelemetry;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -48,6 +49,8 @@ public class Turret {
 
     double[] robotPos = {0, 0, 0};
 
+    public JoinedTelemetry pTelemetry;
+
     public Turret() {}
 
     public void updatePose(double[] pose) {
@@ -76,8 +79,9 @@ public class Turret {
             } else {
                 double currTime = et.milliseconds() - shootStartTimeMs;
 
-                if (currTime < 500) {
+                if (currTime < 300) {
                     blockerServo.setPosition(RobotConstants.blockerShootingPos);
+                } else if (currTime < 500) {
                     clutchServo.setPosition(RobotConstants.clutchEndPos);
                 } else if (currTime < 1000) {
                     intakeMotor.setPower(RobotConstants.intakeMotorPower);
@@ -85,6 +89,8 @@ public class Turret {
                     intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.3);
                 }
             }
+        } else {
+            blockerServo.setPosition(RobotConstants.blockerBlockingPos);
         }
 
         double[] basePreset = (robotPos[0] > 40) ? RobotConstants.fullSpeedPreset.clone() : RobotConstants.closestSpeedPreset.clone();
@@ -92,12 +98,12 @@ public class Turret {
             double[] goal = goalPos();
             double baseDist = 77;
             distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
-            boolean isClose = robotPos[0] < 40;
+            boolean isShootClose = robotPos[0] < 40;
 
             if (targetPreset[0] == -1) {
                 double shootSpeed = basePreset[0];
 
-                if (isClose && useDistError) {
+                if (isShootClose && useDistError) {
                     double kS = 0.006;
                     shootSpeed += distError * kS;
                 }
@@ -116,14 +122,14 @@ public class Turret {
                 if (!spinnerMotor1.velocityFilter.isDataless()) {
                     double pos = basePreset[1];
 
-                    if (isClose && useDistError) {
+                    if (isShootClose && useDistError) {
                         double kP = 0.005;
                         pos += distError * kP;
                     }
 
                     double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
 
-                    double kv = isClose ? 0.1 : 0.3;
+                    double kv = isShootClose ? 0.1 : 0.4; // increased far kv from 0.3
                     pos += error * kv;
                     pos = clip(pos, 0.0, 1.0);
 
@@ -136,11 +142,15 @@ public class Turret {
             } else {
                 pitchTurretServo.setPosition(targetPreset[1]);
             }
+
+            teleData("shooting", true);
         } else if (isSpinningUp) {
             spinnerMotor1.setTargetVelocity(basePreset[0]);
             pitchTurretServo.setPosition(basePreset[1]);
+
+            teleData("spinning up", true);
         } else {
-            blockerServo.setPosition(RobotConstants.blockerBlockingPos);
+            teleData("stopping", true);
         }
 
     }
@@ -285,6 +295,9 @@ public class Turret {
         double[] g = goalPos();
 
         return TylerMath.wrap(-Math.toDegrees(Math.atan2(g[1] - robotPos[1], g[0] - robotPos[0])) + robotPos[2] + 180, -180, 180);
+    }
+    void teleData(String caption, Object data) {
+        if (pTelemetry != null) pTelemetry.addData(caption, data);
     }
 
     public void init(HardwareMap hardwareMap) {

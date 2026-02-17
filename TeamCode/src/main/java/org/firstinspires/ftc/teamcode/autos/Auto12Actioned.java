@@ -117,15 +117,16 @@ public class Auto12Actioned extends OpMode {
         return new ActionBuilder()
                 .doNow(() -> {
                     follower.followPath(scorePreload);
+                    robot.turret.spinUp();
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 4)
+                }, 3.5)
                 .loopFor(t -> {
                     robot.turret.stopIntake();
                     robot.turret.stopShootSequence();
-                }, 0.5)
+                }, 1.0)
                 .doNow(() -> follower.followPath(ethanPath1))
                 .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
                 .doNow(() -> {
@@ -133,11 +134,11 @@ public class Auto12Actioned extends OpMode {
                 })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 4)
+                }, 3.5)
                 .loopFor(t -> {
                     robot.turret.stopIntake();
                     robot.turret.stopShootSequence();
-                }, 0.5)
+                }, 1.0)
                 .doNow(() -> follower.followPath(ethanPath2))
                 .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
                 .doNow(() -> {
@@ -145,11 +146,11 @@ public class Auto12Actioned extends OpMode {
                 })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 4)
+                }, 3.5)
                 .loopFor(t -> {
                     robot.turret.stopIntake();
                     robot.turret.stopShootSequence();
-                }, 0.5)
+                }, 1.0)
                 .doNow(() -> follower.followPath(ethanPath3))
                 .loopUntil(() -> robot.turret.triggerIntake(), () -> follower.isBusy())
                 .doNow(() -> {
@@ -157,7 +158,7 @@ public class Auto12Actioned extends OpMode {
                 })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 4)
+                }, 3.5)
                 .doNow(() -> {
                     robot.turret.stopIntake();
                     follower.followPath(parkPath);

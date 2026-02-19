@@ -135,8 +135,10 @@ public class TeleOpFull extends OpMode {
         Pose2D robotPos = odo.getPose();
 
         if (gamepad1.a) turret.continueShootSequence();
-        else if (isConstantPreset) turret.spinUp();
-        else turret.stopShootSequence();
+        else {
+            if (isConstantPreset) turret.spinUp();
+            turret.isShooting = false;
+        }
 
         pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
         pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());

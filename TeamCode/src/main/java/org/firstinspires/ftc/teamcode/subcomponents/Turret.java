@@ -38,7 +38,7 @@ public class Turret {
     ElapsedTime yawTimer = new ElapsedTime();
 
     double shootStartTimeMs = -1;
-    boolean isShooting = false;
+    public boolean isShooting = false;
     double[] targetPreset = {-1, -1};
     double[] currentTargets = {0, 0};
     public double[] presetOffset = {0, 0};
@@ -176,7 +176,6 @@ public class Turret {
                 clutchTimer.reset();
             }
 
-
             if (highColor.checkColor() || lowColor.checkColor()) {
                 clutchServo.setPosition(RobotConstants.clutchStartPos);
             }
@@ -245,6 +244,10 @@ public class Turret {
         isSpinningUp = true;
     }
 
+    public void spinUp(boolean isSpinningUp) {
+        this.isSpinningUp = isSpinningUp;
+    }
+
     public double[] getCurrentTargets() {
         return currentTargets;
     }
@@ -252,7 +255,6 @@ public class Turret {
     public void continueShootSequence() {
         if (!isShooting) {
             isShooting = true;
-            isSpinningUp = false;
             shootStartTimeMs = -1;
         }
     }
@@ -267,7 +269,6 @@ public class Turret {
 
     public void stopShootSequence() {
         isShooting = false;
-        isSpinningUp = false;
         stopSpinner();
     }
 

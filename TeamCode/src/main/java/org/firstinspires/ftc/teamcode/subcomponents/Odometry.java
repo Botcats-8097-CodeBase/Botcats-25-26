@@ -28,8 +28,8 @@ public class Odometry {
                 .portY(0)
                 .distanceUnit(DistanceUnit.INCH)
                 .hardwareMapName("pinpoint")
-                .forwardEncoderDirection(OctoQuad.EncoderDirection.REVERSE)
-                .strafeEncoderDirection(OctoQuad.EncoderDirection.REVERSE);
+                .forwardEncoderDirection(OctoQuad.EncoderDirection.FORWARD)
+                .strafeEncoderDirection(OctoQuad.EncoderDirection.FORWARD);
 
         localizer = new OctoLocalizer(hardwareMap, localizerConstants);
     }

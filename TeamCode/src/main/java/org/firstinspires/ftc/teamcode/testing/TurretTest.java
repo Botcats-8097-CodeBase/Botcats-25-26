@@ -4,6 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
@@ -23,6 +24,8 @@ public class TurretTest extends OpMode {
     public static double targetSpeed = 1.75;
     public static double targetServoAngle = 0.30;
 
+    ElapsedTime et = new ElapsedTime();
+
     @Override
     public void init() {
         initRobot();
@@ -31,6 +34,7 @@ public class TurretTest extends OpMode {
     @Override
     public void start() {
         super.start();
+        et.reset();
     }
 
     @Override

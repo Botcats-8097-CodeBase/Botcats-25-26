@@ -77,16 +77,16 @@ public class TeleOpFull extends OpMode {
         } else {
             if (!isRed) {
                 if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 0);
                 } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 0);
                 }
 
             } else {
                 if (isClose) {
-                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);
+                    initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 0);
                 } else {
-                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 180);
+                    initPose = new Pose2D(DistanceUnit.INCH, -63.5, 8.5, AngleUnit.DEGREES, 0);
                 }
 
             }
@@ -118,6 +118,7 @@ public class TeleOpFull extends OpMode {
 //        YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
 //        double yaw = robotOrientation.getYaw(AngleUnit.DEGREES) + imuOffset;
         double yaw = odo.getPose().getHeading(AngleUnit.DEGREES) + imuOffset;
+        pTelemetry.addData("raw yaw", odo.getPose().getHeading(AngleUnit.DEGREES));
         pTelemetry.addData("Robot Yaw (imu)", yaw);
 
         // pressurising the right trigger slows down the drive train
@@ -196,6 +197,9 @@ public class TeleOpFull extends OpMode {
 
             Double limeFacingTarget = limelight.limeAutoFacing(turret.getCurrentFacing(), id);
             Pose3D camPose = limelight.limePosFace();
+
+//            double facingRPM =
+
 //            telemetry.addData("limeFacingTarget", limeFacingTarget);
             if (limeFacingTarget == null || camPose == null) {
                 if ((getRuntime() - lastTimeSeenLimelight) > 0.8) turret.faceTo(facingTarget);

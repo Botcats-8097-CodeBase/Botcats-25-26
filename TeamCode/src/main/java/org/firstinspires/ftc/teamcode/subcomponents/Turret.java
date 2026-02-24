@@ -106,7 +106,7 @@ public class Turret {
                 double currTime = et.milliseconds() - shootStartTimeMs;
 
                 if (!spinnerMotor1.velocityFilter.isDataless())
-                    pitchTurretServo.setPosition(varPreset(-(spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity()), preset[1]));
+                    pitchTurretServo.setPosition(varPreset((spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity()), preset[1]));
 
                 if (currTime < 500) {
                     clutchServo.setPosition(RobotConstants.clutchEndPos);

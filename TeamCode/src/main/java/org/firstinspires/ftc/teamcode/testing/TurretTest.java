@@ -24,6 +24,8 @@ public class TurretTest extends OpMode {
     public static double targetSpeed = 1.75;
     public static double targetServoAngle = 0.30;
 
+    double pitchValue = 0;
+
     ElapsedTime et = new ElapsedTime();
 
     @Override
@@ -50,6 +52,22 @@ public class TurretTest extends OpMode {
         } else {
             turret.stopShootSequence();
         }
+
+        if (pitchValue > 1) {
+            pitchValue = 1;
+        } else if (pitchValue < 0) {
+            pitchValue = 0;
+        }
+
+        if (gamepad1.dpad_up) {
+            pitchValue += 0.01;
+        } else if (gamepad1.dpad_down) {
+            pitchValue -= 0.01;
+        } else {
+            turret.pitchTurretServo.setPosition(pitchValue);
+        }
+
+        telemetry.addData("pitch value", pitchValue);
 
         telemetry.addData("turret Target Vel", targetSpeed);
         telemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());

@@ -91,7 +91,7 @@ public class Limelight {
 
     public static double[] offsetTurret(double yaw, double distance) {
         double radian = Math.toRadians(yaw);
-        return new double[]{Math.cos(radian) * distance, Math.sin(radian) * distance};
+        return new double[]{-Math.cos(radian) * distance, -Math.sin(radian) * distance};
     }
 
     public MosaicPattern getMosaicPattern() {

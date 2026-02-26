@@ -8,6 +8,7 @@ import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.paths.PathConstraints;
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -18,7 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 
 public class Constants {
-    public static FollowerConstants followerConstants = new FollowerConstants()
+    public static FollowerConstants     followerConstants = new FollowerConstants()
             .forwardZeroPowerAcceleration(-44.71791)
             .lateralZeroPowerAcceleration(-57.12016656)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0))
@@ -42,18 +43,29 @@ public class Constants {
             .yVelocity(59.76964);
 
 
-    public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-7.125)
-            .strafePodX(-1.67)
-            .distanceUnit(DistanceUnit.INCH)
+//    public static PinpointConstants localizerConstants = new PinpointConstants()
+//            .forwardPodY(-7.125)
+//            .strafePodX(-1.67)
+//            .distanceUnit(DistanceUnit.INCH)
+//            .hardwareMapName("pinpoint")
+//            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+//            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
+//            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+    public static OctoConstants localizerConstants = new OctoConstants()
             .hardwareMapName("pinpoint")
-            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
-            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+            .imuScalar(1.0082761111f)
+            .forwardPodY((float) (7.125 * DistanceUnit.mmPerInch))
+            .strafePodX((float) (1.67 * DistanceUnit.mmPerInch))
+            .portX(0)
+            .portY(1)
+            .forwardEncoderDirection(OctoQuad.EncoderDirection.REVERSE)
+            .strafeEncoderDirection(OctoQuad.EncoderDirection.REVERSE);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
-                .pinpointLocalizer(localizerConstants)
+//                .pinpointLocalizer(localizerConstants)
+                .setLocalizer(new OctoLocalizer(hardwareMap, localizerConstants))
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
                 .build();

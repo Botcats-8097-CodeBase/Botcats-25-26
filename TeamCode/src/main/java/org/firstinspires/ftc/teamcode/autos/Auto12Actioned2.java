@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.actions.ActionManager;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.pedroPathing.PedroConversion;
 
-@Autonomous(name = "12 auto")
+@Autonomous(name = "12 auto actioned 2")
 public class Auto12Actioned2 extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
@@ -31,7 +31,7 @@ public class Auto12Actioned2 extends OpMode {
     AutoRobot robot = new AutoRobot();
 
     private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
+    private Timer opmodeTimer;
     private int pathState;
 
     public double stripXCoordS = 46;
@@ -121,42 +121,38 @@ public class Auto12Actioned2 extends OpMode {
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-                .loopFor(t -> {
-                    robot.turret.stopIntake();
-                    robot.turret.stopShootSequence();
-                }, 1)
+//                .loopFor(t -> {
+//                    robot.turret.stopIntake();
+//                    robot.turret.stopShootSequence();
+//                }, 1)
                 .doNow(() -> follower.followPath(ethanPath1))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
-                    robot.turret.spinUp();
                 }, () -> !follower.isBusy())
-                .doNow(() -> {
-                    robot.turret.stopIntake();
-                    actionTimer.resetTimer();
-                })
+//                .doNow(() -> {
+//                    robot.turret.stopIntake();
+//                })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-                .loopFor(t -> {
-                    robot.turret.stopIntake();
-                    robot.turret.stopShootSequence();
-                }, 1)
+//                .loopFor(t -> {
+//                    robot.turret.stopIntake();
+//                    robot.turret.stopShootSequence();
+//                }, 1)
                 .doNow(() -> follower.followPath(ethanPath2))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
-                    robot.turret.spinUp();
                 }, () -> !follower.isBusy())
                 .doNow(() -> {
                     robot.turret.stopIntake();
-                    actionTimer.resetTimer();
                 })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-                .loopFor(t -> {
-                    robot.turret.stopIntake();
-                    robot.turret.stopShootSequence();
-                }, 1)
+//                .loopFor(t -> {
+//                    robot.turret.stopIntake();
+//                    robot.turret.stopShootSequence();
+//                }, 1)
                 .doNow(() -> follower.followPath(ethanPath3))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
@@ -164,7 +160,6 @@ public class Auto12Actioned2 extends OpMode {
                 }, () -> !follower.isBusy())
                 .doNow(() -> {
                     robot.turret.stopIntake();
-                    actionTimer.resetTimer();
                 })
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
@@ -201,9 +196,7 @@ public class Auto12Actioned2 extends OpMode {
 
     @Override
     public void init() {
-        pathTimer = new Timer();
         opmodeTimer = new Timer();
-        actionTimer = new Timer();
         opmodeTimer.resetTimer();
 
         robot.init(hardwareMap);

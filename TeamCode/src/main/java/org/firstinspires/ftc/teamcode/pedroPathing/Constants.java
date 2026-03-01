@@ -25,7 +25,8 @@ public class Constants {
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0))
             .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.01, 0))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.008,0.0,0,0.5,0.0))
-            .centripetalScaling(0.0002);
+            .centripetalScaling(0.0002)
+            .mass(10.43);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
@@ -39,7 +40,7 @@ public class Constants {
             .leftRearMotorDirection(RobotConstants.leftBackDiveDirection)
             .rightFrontMotorDirection(RobotConstants.rightFrontDiveDirection)
             .rightRearMotorDirection(RobotConstants.rightBackDiveDirection)
-            .xVelocity(78.80872)
+            .xVelocity(78.555)
             .yVelocity(59.76964);
 
 

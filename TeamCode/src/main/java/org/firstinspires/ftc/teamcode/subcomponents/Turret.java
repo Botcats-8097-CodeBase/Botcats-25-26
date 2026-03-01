@@ -44,6 +44,8 @@ public class Turret {
     ElapsedTime yawTimer = new ElapsedTime();
 
     double shootStartTimeMs = -1;
+    boolean wasShooting = true;
+    double shootStopTimeMs = -1;
     public boolean isShooting = false;
     double[] targetPreset = {-1, -1};
     double[] currentTargets = {0, 0};
@@ -77,6 +79,8 @@ public class Turret {
 
         double[] basePreset = (robotPos[0] > 40) ? RobotConstants.fullSpeedPreset.clone() : RobotConstants.closestSpeedPreset.clone();
         if (isShooting) {
+            wasShooting = true;
+
             double[] goal = goalPos();
             double baseDist = 77;
             distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
@@ -90,17 +94,16 @@ public class Turret {
                 } else {
                     double currTime = et.milliseconds() - shootStartTimeMs;
 
-                    if (currTime < 300) {
+                    if (currTime < 100) {
                         blockerServo.setPosition(RobotConstants.blockerShootingPos);
-                    } else if (currTime < 500) {
+                    } else if (currTime < 300) {
                         clutchServo.setPosition(RobotConstants.clutchEndPos);
-                    } else if (currTime < 1000) {
+                    } else {
                         intakeMotor.setPower(RobotConstants.intakeMotorPower);
                     }
-//                else if (currTime < 1250) {
-//                    intakeMotor.setPower(RobotConstants.intakeMotorPower + 0.3);
-//                }
                 }
+            } else {
+                intakeMotor.setPower(0);
             }
 
             if (targetPreset[0] == -1) {
@@ -156,7 +159,17 @@ public class Turret {
                 teleData("stopping", true);
             }
 
-            blockerServo.setPosition(RobotConstants.blockerBlockingPos);
+            if (wasShooting) {
+                shootStopTimeMs = et.milliseconds();
+                wasShooting = false;
+            } else {
+                double currTime = et.milliseconds() - shootStopTimeMs;
+
+                if (currTime > 800) {
+                    blockerServo.setPosition(RobotConstants.blockerBlockingPos);
+                }
+            }
+
 
             if (intakeState != IntakeState.STOP) {
                 if (isFirstIntake) {

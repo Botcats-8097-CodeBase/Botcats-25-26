@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.autos;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -36,26 +37,29 @@ public class POF12 extends OpMode {
     public double intakeOffset = -8;
     public double intakeAngle = 180;
 
-    private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE, transativeSPose, transativeEPose;
+    public double shootTimeMs = 2500;
+
+    private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE, transativeMPose, transativeEPose;
     private Path scorePreload;
-    private PathChain parkPath, ethanPath1, ethanPath2, ethanPath3, transitivePath1, transitivePath2;
+    private PathChain parkPath, ethanPath1, ethanPath2, ethanPath3, transitivePath1, transitivePath2, transitivePath15;
     public void buildPaths() {
         if (!isRed) {
             if (isClose)
                 startPose = AutoConstants.blueCloseStartPos;
             else
                 startPose = AutoConstants.blueFarStartPos;
-            scorePose = new Pose(56.5, 84, Math.toRadians(135));
+            scorePose = new Pose(56.5, 84, Math.toRadians(140));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
 
-            transativeSPose = new Pose(46, 58, Math.toRadians(150));
             transativeEPose = new Pose(8, 58, Math.toRadians(150));
+            transativeMPose = new Pose(11, 60, Math.toRadians(180));
+            robot.turret.presetOffset = new double[]{-0.15, 0};
         } else {
             if (isClose)
                 startPose = AutoConstants.redCloseStartPos;
             else
                 startPose = AutoConstants.redFarStartPos;
-            scorePose = new Pose(90.5, 88, Math.toRadians(45));
+            scorePose = new Pose(90.5, 88, Math.toRadians(40));
             parkPose = new Pose(90.5, 40, Math.toRadians(90));
             stripXCordS = 98;
             stripXCordE = 120;
@@ -68,8 +72,8 @@ public class POF12 extends OpMode {
 
         firstStripS = new Pose(stripXCordS, 85, Math.toRadians(intakeAngle));
         firstStripE = new Pose(stripXCordE, 85, Math.toRadians(intakeAngle));
-        secondStripS = new Pose(stripXCordS, 58, Math.toRadians(intakeAngle));
-        secondStripE = new Pose(stripXCordE + intakeOffset, 58, Math.toRadians(intakeAngle));
+        secondStripS = new Pose(stripXCordS, 56, Math.toRadians(intakeAngle));
+        secondStripE = new Pose(stripXCordE + intakeOffset, 56, Math.toRadians(intakeAngle));
         thirdStripS = new Pose(stripXCordS, 38, Math.toRadians(intakeAngle));
         thirdStripE = new Pose(stripXCordE + intakeOffset, 38, Math.toRadians(intakeAngle));
 
@@ -93,14 +97,22 @@ public class POF12 extends OpMode {
                 .build();
 
         ethanPath2 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, secondStripS))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), secondStripS.getHeading())
-                .addPath(new BezierLine(secondStripS, secondStripE))
-                .setLinearHeadingInterpolation(secondStripS.getHeading(), secondStripE.getHeading())
-                .addPath(new BezierLine(secondStripE, secondStripS))
-                .setLinearHeadingInterpolation(secondStripE.getHeading(), secondStripS.getHeading())
-                .addPath(new BezierLine(secondStripS, scorePose))
-                .setLinearHeadingInterpolation(secondStripS.getHeading(), scorePose.getHeading())
+                .addPath(
+                        new BezierCurve(
+                                scorePose,
+                                new Pose(55.5, 48),
+                                secondStripE
+                        )
+                )
+                .setLinearHeadingInterpolation(scorePose.getHeading(), secondStripE.getHeading())
+                .addPath(
+                        new BezierCurve(
+                                secondStripE,
+                                new Pose(55.5, 48),
+                                scorePose
+                        )
+                )
+                .setLinearHeadingInterpolation(secondStripE.getHeading(), scorePose.getHeading())
                 .setGlobalDeceleration(1)
                 .build();
 
@@ -114,18 +126,38 @@ public class POF12 extends OpMode {
                 .build();
 
         transitivePath1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, transativeSPose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), transativeSPose.getHeading())
-                .addPath(new BezierLine(transativeSPose, transativeEPose))
-                .setLinearHeadingInterpolation(transativeSPose.getHeading(), transativeEPose.getHeading())
+                .addPath(
+                        new BezierCurve(
+                                scorePose,
+                                new Pose(52.5, 61.5),
+                                transativeEPose
+                        )
+                )
+                .setLinearHeadingInterpolation(scorePose.getHeading(), transativeEPose.getHeading())
                 .setGlobalDeceleration(1)
                 .build();
 
         transitivePath2 = follower.pathBuilder()
-                .addPath(new BezierLine(transativeEPose, transativeSPose))
-                .setLinearHeadingInterpolation(thirdStripE.getHeading(), transativeSPose.getHeading())
-                .addPath(new BezierLine(transativeSPose, scorePose))
-                .setLinearHeadingInterpolation(transativeSPose.getHeading(), scorePose.getHeading())
+                .addPath(
+                        new BezierCurve(
+                                transativeMPose,
+                                new Pose(52.5, 61.5),
+                                scorePose
+                        )
+                )
+                .setLinearHeadingInterpolation(transativeMPose.getHeading(), scorePose.getHeading())
+                .setGlobalDeceleration(1)
+                .build();
+
+        transitivePath15 = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                transativeEPose,
+                                new Pose(9, 58),
+                                transativeMPose
+                        )
+                )
+                .setLinearHeadingInterpolation(transativeEPose.getHeading(), transativeMPose.getHeading())
                 .setGlobalDeceleration(1)
                 .build();
     }
@@ -145,7 +177,7 @@ public class POF12 extends OpMode {
                 break;
             case 2:
                 robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
+                if (actionTimer.getElapsedTime() > shootTimeMs) {
                     actionTimer.resetTimer();
                     setPathState(3);
                 }
@@ -153,7 +185,7 @@ public class POF12 extends OpMode {
             case 3:
                 robot.turret.stopIntake();
                 robot.turret.stopShootSequence();
-                if (actionTimer.getElapsedTime() > 1000) {
+                if (actionTimer.getElapsedTime() > 300) {
                     follower.followPath(ethanPath2, 0.85, true);
                     setPathState(4);
                 }
@@ -170,52 +202,54 @@ public class POF12 extends OpMode {
                 break;
             case 5:
                 robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
+                if (actionTimer.getElapsedTime() > shootTimeMs) {
                     actionTimer.resetTimer();
-                    setPathState(6);
-                }
-                break;
-// todo START HERE PASTE
-            case 6:
-                robot.turret.stopIntake();
-                robot.turret.stopShootSequence();
-                if (actionTimer.getElapsedTime() > 1000) {
-                    follower.followPath(transitivePath1, 0.5, true);
+                    robot.turret.triggerIntake();
+                    robot.turret.stopShootSequence();
+                    follower.followPath(transitivePath1, 0.85, true);
                     setPathState(7);
                 }
                 break;
+// todo START HERE PASTE
             case 7:
                 robot.turret.triggerIntake();
-//                robot.turret.spinUp();
                 if (!follower.isBusy()) {
                     setPathState(8);
                     actionTimer.resetTimer();
                 }
                 break;
             case 8:
-                if (actionTimer.getElapsedTime() > 3000) {
+                if (actionTimer.getElapsedTime() > 1500) {
                     setPathState(9);
-                    follower.followPath(transitivePath2);
+                    follower.followPath(transitivePath15);
                     robot.turret.stopIntake();
                     actionTimer.resetTimer();
                 }
                 break;
             case 9:
-                if (!follower.isBusy()) {
+                if (actionTimer.getElapsedTime() > 1500 && !follower.isBusy()) {
                     setPathState(10);
+                    follower.followPath(transitivePath2);
                 }
+                break;
             case 10:
-                robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
+                if (!follower.isBusy()) {
                     actionTimer.resetTimer();
                     setPathState(11);
                 }
                 break;
             case 11:
+                robot.turret.continueShootSequence();
+                if (actionTimer.getElapsedTime() > shootTimeMs) {
+                    actionTimer.resetTimer();
+                    setPathState(12);
+                }
+                break;
+            case 12:
                 robot.turret.stopIntake();
-                follower.followPath(parkPath);
                 robot.turret.stopShootSequence();
-                setPathState(12);
+                follower.followPath(parkPath);
+                setPathState(13);
                 break;
         }
     }

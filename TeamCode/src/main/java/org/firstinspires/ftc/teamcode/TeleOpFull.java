@@ -107,7 +107,6 @@ public class TeleOpFull extends OpMode {
         else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
         else turret.stopIntake();
 
-
         boolean dpadRight = gamepad1.dpad_right;
         if (dpadRight) {
             turret.manualOverride();
@@ -155,7 +154,6 @@ public class TeleOpFull extends OpMode {
             double turretBodyDistance = 1;
             Pose3D camPose = limelight.limePosFace();
 
-
             if (camPose == null) {
                 if ((getRuntime() - lastTimeSeenLimelight) > 0.8) {
                     turret.updatePose(new double[]{robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw});
@@ -177,8 +175,7 @@ public class TeleOpFull extends OpMode {
                 camPose.getPosition().x += limelightOffset[0];
                 camPose.getPosition().y += limelightOffset[1];
 
-                turret.updatePose(new double[]{camPose.getPosition().x, camPose.getPosition().y,
-                        yaw});
+                turret.updatePose(new double[]{camPose.getPosition().x, camPose.getPosition().y, yaw});
 
                 lastTimeSeenLimelight = getRuntime();
                 turret.faceTo(limePosFace);

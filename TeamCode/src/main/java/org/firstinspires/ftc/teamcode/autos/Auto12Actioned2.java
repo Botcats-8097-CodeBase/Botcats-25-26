@@ -121,10 +121,10 @@ public class Auto12Actioned2 extends OpMode {
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-//                .loopFor(t -> {
-//                    robot.turret.stopIntake();
-//                    robot.turret.stopShootSequence();
-//                }, 1)
+                .loopFor(t -> {
+                    robot.turret.stopIntake();
+                    robot.turret.stopShootSequence();
+                }, 1)
                 .doNow(() -> follower.followPath(ethanPath1))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
@@ -135,10 +135,10 @@ public class Auto12Actioned2 extends OpMode {
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-//                .loopFor(t -> {
-//                    robot.turret.stopIntake();
-//                    robot.turret.stopShootSequence();
-//                }, 1)
+                .loopFor(t -> {
+                    robot.turret.stopIntake();
+                    robot.turret.stopShootSequence();
+                }, 1)
                 .doNow(() -> follower.followPath(ethanPath2))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
@@ -149,10 +149,10 @@ public class Auto12Actioned2 extends OpMode {
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, 3.5)
-//                .loopFor(t -> {
-//                    robot.turret.stopIntake();
-//                    robot.turret.stopShootSequence();
-//                }, 1)
+                .loopFor(t -> {
+                    robot.turret.stopIntake();
+                    robot.turret.stopShootSequence();
+                }, 1)
                 .doNow(() -> follower.followPath(ethanPath3))
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();

@@ -54,7 +54,7 @@ public class POF30Actioned2 extends OpMode {
                 startPose = AutoConstants.blueCloseStartPos;
             else
                 startPose = AutoConstants.blueFarStartPos;
-            scorePose = new Pose(56.5 - 4, 84 - 4, Math.toRadians(180));
+            scorePose = new Pose(56.5 - 4, 84 - 10, Math.toRadians(180));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
 
             transativeEPose = new Pose(8, 58, Math.toRadians(150));
@@ -211,7 +211,12 @@ public class POF30Actioned2 extends OpMode {
                     follower.followPath(transitivePath15);
                     robot.turret.stopIntake();
                 })
-                .waitUntil(() -> actionTimer.getElapsedTime() > trans2Sec && !follower.isBusy())
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.unBlock();
+                    robot.turret.clutch();
+                })
+                .waitUntil(() -> !follower.isBusy())
                 .doNow(() -> follower.followPath(transitivePath2))
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
@@ -233,7 +238,12 @@ public class POF30Actioned2 extends OpMode {
                     follower.followPath(transitivePath15);
                     robot.turret.stopIntake();
                 })
-                .waitUntil(() -> actionTimer.getElapsedTime() > trans2Sec && !follower.isBusy())
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.unBlock();
+                    robot.turret.clutch();
+                })
+                .waitUntil(() -> !follower.isBusy())
                 .doNow(() -> follower.followPath(transitivePath2))
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
@@ -257,7 +267,12 @@ public class POF30Actioned2 extends OpMode {
                     follower.followPath(transitivePath15);
                     robot.turret.stopIntake();
                 })
-                .waitUntil(() -> actionTimer.getElapsedTime() > trans2Sec && !follower.isBusy())
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.unBlock();
+                    robot.turret.clutch();
+                })
+                .waitUntil(() -> !follower.isBusy())
                 .doNow(() -> follower.followPath(transitivePath2))
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {

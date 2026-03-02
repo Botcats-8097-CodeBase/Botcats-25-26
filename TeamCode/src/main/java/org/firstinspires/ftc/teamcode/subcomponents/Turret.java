@@ -77,14 +77,56 @@ public class Turret {
         }
         yawMotor.update(inputYaw);
 
-        double[] basePreset = (robotPos[0] > 40) ? RobotConstants.fullSpeedPreset.clone() : RobotConstants.closestSpeedPreset.clone();
+        boolean isShootClose = robotPos[0] < 40;
+        double[] basePreset = isShootClose ? RobotConstants.closestSpeedPreset.clone() : RobotConstants.fullSpeedPreset.clone();
+
+        if (targetPreset[0] == -1) {
+            double shootSpeed = basePreset[0];
+
+            if (isShootClose && useDistError) {
+                double kS = 0.003;
+                shootSpeed += distError * kS;
+            }
+
+            shootSpeed += presetOffset[0];
+            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
+            currentTargets[0] = shootSpeed;
+            teleData("Check Running", true);
+        } else {
+            currentTargets[0] = targetPreset[0];
+            teleData("Check Running", false);
+        }
+
+        if (targetPreset[1] == -1) {
+            if (!spinnerMotor1.velocityFilter.isDataless()) {
+                double pos = basePreset[1];
+
+                if (isShootClose && useDistError) {
+                    double kP = 0.003;
+                    pos += distError * kP;
+                }
+
+                double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
+
+                double kv = isShootClose ? 0.1 : 0.4; // increased far kv from 0.3
+                pos += error * kv;
+                pos = clip(pos, 0.0, 1.0);
+                pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
+
+                pos += presetOffset[1];
+
+                currentTargets[1] = pos;
+            }
+        } else {
+            currentTargets[1] = targetPreset[1];
+        }
+
         if (isShooting) {
             wasShooting = true;
 
             double[] goal = goalPos();
             double baseDist = 77;
             distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
-            boolean isShootClose = robotPos[0] < 40;
 
             if (spinnerMotor1.isAtTargetVelocity() || shootStartTimeMs != -1) {
                 //this code is made when we want a shoot sequence (we don't need this right now)
@@ -104,59 +146,17 @@ public class Turret {
                 }
             } else {
                 intakeMotor.setPower(0);
+                blockerServo.setPosition(RobotConstants.blockerBlockingPos);
             }
 
-            if (targetPreset[0] == -1) {
-                double shootSpeed = basePreset[0];
-
-                if (isShootClose && useDistError) {
-                    double kS = 0.006;
-                    shootSpeed += distError * kS;
-                }
-
-                shootSpeed += presetOffset[0];
-
-
-                spinnerMotor1.setTargetVelocity(shootSpeed);
-
-                currentTargets[0] = shootSpeed;
-            } else {
-                pitchTurretServo.setPosition(targetPreset[0]);
-            }
-
-            if (targetPreset[1] == -1) {
-                if (!spinnerMotor1.velocityFilter.isDataless()) {
-                    double pos = basePreset[1];
-
-                    if (isShootClose && useDistError) {
-                        double kP = 0.005;
-                        pos += distError * kP;
-                    }
-
-                    double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
-
-                    double kv = isShootClose ? 0.1 : 0.4; // increased far kv from 0.3
-                    pos += error * kv;
-                    pos = clip(pos, 0.0, 1.0);
-
-                    pos += presetOffset[1];
-
-                    pitchTurretServo.setPosition(pos);
-
-                    currentTargets[1] = pos;
-                }
-            } else {
-                pitchTurretServo.setPosition(targetPreset[1]);
-            }
-
-            teleData("shooting", true);
+            spinnerMotor1.setTargetVelocity(currentTargets[0]);
+            pitchTurretServo.setPosition(currentTargets[1]);
         } else {
             if (isSpinningUp) {
-                spinnerMotor1.setTargetVelocity(basePreset[0]);
-                pitchTurretServo.setPosition(basePreset[1]);
-                teleData("spinning up", true);
+                spinnerMotor1.setTargetVelocity(currentTargets[0]);
+                pitchTurretServo.setPosition(currentTargets[1]);
             } else {
-                teleData("stopping", true);
+                stopSpinner();
             }
 
             if (wasShooting) {
@@ -165,6 +165,7 @@ public class Turret {
             } else {
                 double currTime = et.milliseconds() - shootStopTimeMs;
 
+                // todo inspect 1st case blocker situation (open when shooting)
                 if (currTime > 800) {
                     blockerServo.setPosition(RobotConstants.blockerBlockingPos);
                 }
@@ -253,11 +254,10 @@ public class Turret {
 
     public void stopShootSequence() {
         isShooting = false;
-        stopSpinner();
     }
 
     public double[] goalPos() {
-        return isRed ? new double[]{-72, 68} : new double[]{-72, -68};
+        return isRed ? new double[]{-68, 72} : new double[]{-68, -72};
     }
 
     public void setShootPreset(double[] preset) {
@@ -298,7 +298,7 @@ public class Turret {
         yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         yawMotor.setTargetPosition(0);
         yawMotor.setPosController(new PIDController(0.015, 0.0002, 0, 100));
-        yawMotor.setMaxPower(0.4);
+        yawMotor.setMaxPower(0);//0.4);
 
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);
@@ -330,6 +330,7 @@ public class Turret {
         highColor.init(hardwareMap, RobotConstants.highColorSensorName);
 
         blockerServo = hardwareMap.get(Servo.class, RobotConstants.blockerServoName);
+        blockerServo.setPosition(RobotConstants.blockerBlockingPos);
 
         et.reset();
         yawTimer.reset();

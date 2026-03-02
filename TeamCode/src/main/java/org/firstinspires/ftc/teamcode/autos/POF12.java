@@ -318,8 +318,8 @@ public class POF12 extends OpMode {
     @Override
     public void stop() {
         double[] con = PedroConversion.pedroToOdo(new double[]{follower.getPose().getX(), follower.getPose().getY(), follower.getPose().getHeading()});
-        blackboard.put("x", con[0]);
-        blackboard.put("y", con[1]);
+        blackboard.put("x", con[0] - 2.2);
+        blackboard.put("y", con[1] - 0.2);
         blackboard.put("heading", con[2]);
     }
 }

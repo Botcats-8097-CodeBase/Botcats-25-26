@@ -24,7 +24,7 @@ public class RobotConstants {
     public static String highColorSensorName = "highColor";
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartAngle = 287.9;
+    public static double yawTurretStartAngle = 27.15;
     public static double yawTurretMaxAngle = 150;
     public static double yawTurretMinAngle = -40;
 
@@ -48,7 +48,7 @@ public class RobotConstants {
     public static double blockerShootingPos = 0.42;
 
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
-    public static double[] fullSpeedPreset = {2.15, 0.70};
-    public static double[] closestSpeedPreset = {1.40, 0.50};
+    public static double[] fullSpeedPreset = {2.20, 0.80}; // 70
+    public static double[] closestSpeedPreset = {1.40, 0.50}; // 50
 
 }

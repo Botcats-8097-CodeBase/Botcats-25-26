@@ -46,24 +46,15 @@ public class TeleOpFull extends OpMode {
     boolean isConstantPreset = false;
 
     double yawOffset = -90;
-    double imuOffset = 0;
 
     int id;
 
-    public IMU imu;
     double targetTurretAngle = 0;
     boolean isAutoAiming = true;
 
     ElapsedTime et = new ElapsedTime();
 
     Pose2D initPose = new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0);
-
-    IMU.Parameters parameters = new IMU.Parameters(
-            new RevHubOrientationOnRobot(
-                    RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                    RevHubOrientationOnRobot.UsbFacingDirection.UP
-            )
-    );
 
     double lastTimeSeenLimelight = 0;
 
@@ -80,22 +71,20 @@ public class TeleOpFull extends OpMode {
 
         // reset IMU
         if (gamepad1.yWasPressed()) {
-            imu.resetYaw();
-            imu.initialize(parameters);
-            imuOffset = 0;
+            odo.setPose(new Pose2D(DistanceUnit.INCH, robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), AngleUnit.DEGREES, 180));
         }
 
 //        YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
-        double yaw = TylerMath.wrap(robotPos.getHeading(AngleUnit.DEGREES) + imuOffset, 0, 360);
+        double yaw = TylerMath.wrap(robotPos.getHeading(AngleUnit.DEGREES), 0, 360);
         pTelemetry.addData("Robot Yaw (imu)", yaw);
 
         // pressurising the right trigger slows down the drive train
-        double coefficient = 0.35;
-        if (gamepad1.right_trigger < 0.5) pTelemetry.addData("Speed Mode", "off");
+        double coefficient = 1;
+        if (gamepad1.right_trigger < 0.5) pTelemetry.addData("Speed Mode", "on");
         else
         {
-            pTelemetry.addData("Speed Mode", "on");
-            coefficient = 1;
+            pTelemetry.addData("Speed Mode", "off");
+            coefficient = 0.35;
         }
 
         robot.drivePower(
@@ -125,8 +114,10 @@ public class TeleOpFull extends OpMode {
         else turret.stopShootSequence();
 
         turret.spinUp(isConstantPreset);
+        turret.loop();
 
         pTelemetry.addData("turret Vel", turret.spinnerMotor1.getVelocity());
+        pTelemetry.addData("turret Vel Inner", turret.spinnerMotor1.getTargetVelocity());
         pTelemetry.addData("turret Pwr", turret.spinnerMotor1.getPower());
         pTelemetry.addData("turret Target Vel", turret.getCurrentTargets()[0]);
         pTelemetry.addData("turret Target Pitch", turret.getCurrentTargets()[1]);
@@ -192,7 +183,7 @@ public class TeleOpFull extends OpMode {
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
         pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
 
-        turret.loop();
+
 
         pTelemetry.update();
 
@@ -213,10 +204,7 @@ public class TeleOpFull extends OpMode {
         limelight.init(hardwareMap);
         odo.init(hardwareMap);
 
-
-        imu = hardwareMap.get(IMU.class, "imu");
-        imu.initialize(parameters);
-        imu.resetYaw();
+        turret.pTelemetry = pTelemetry;
     }
 
     @Override
@@ -249,11 +237,15 @@ public class TeleOpFull extends OpMode {
         et.reset();
 
         if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
-            initPose = new Pose2D(DistanceUnit.INCH, (double) blackboard.get("x"), (double) blackboard.get("y"), AngleUnit.DEGREES, TylerMath.wrap(((double) blackboard.get("heading"))-180, -180, 180));
-            imuOffset = ((double) blackboard.get("heading"));
+            initPose = new Pose2D(
+                    DistanceUnit.INCH,
+                    (double) blackboard.get("x"),
+                    (double) blackboard.get("y"),
+                    AngleUnit.DEGREES,
+                    TylerMath.wrap(((double) blackboard.get("heading")), -180, 180));
         } else {
             if (!isRed) {
-                if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
+                if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180); // 65.315 -8.38 180 270
                 else initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
 
             } else {

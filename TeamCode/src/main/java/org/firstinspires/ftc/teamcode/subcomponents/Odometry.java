@@ -39,6 +39,14 @@ public class Odometry {
         return new Pose2D(DistanceUnit.INCH, localizer.getPose().getX(), localizer.getPose().getY(), AngleUnit.RADIANS, localizer.getPose().getHeading());
     }
 
+    public void reset() {
+        try {
+            localizer.resetIMU();
+        } catch(InterruptedException e) {
+
+        }
+    }
+
     public void update() {
         localizer.update();
     }

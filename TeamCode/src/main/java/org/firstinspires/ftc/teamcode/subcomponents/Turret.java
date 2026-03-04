@@ -27,6 +27,8 @@ public class Turret {
         REVERSE
     }
 
+    public static final double YAW_TICKS_PER_REVOLUTION = 145.090909;
+
     public RunToMotor yawMotor = new RunToMotor();
     public AS5600 yawTurretEncoder;
     public VelocityMotor spinnerMotor1 = new VelocityMotor();
@@ -62,6 +64,8 @@ public class Turret {
     boolean isClutchOverride = false;
     IntakeState intakeState = IntakeState.STOP;
 
+    boolean useAbsEncoder = false;
+
     double[] robotPos = {0, 0, 0};
 
     public JoinedTelemetry pTelemetry;
@@ -77,7 +81,7 @@ public class Turret {
         yawTimer.reset();
 
         //TODO: Make this better in the future
-        double inputYaw = yawTurretEncoder.getAngle0to360();
+        double inputYaw = getYawPos0to360();
         teleData("input Raw Raw", yawTurretEncoder.getAngle0to360());
         if (inputYaw > 270) {
             inputYaw -= 360;
@@ -214,6 +218,12 @@ public class Turret {
 
         spinnerMotor1.update();
         spinnerMotor2.setPower(spinnerMotor1.getPower());
+
+
+        pTelemetry.addData("turret Vel", spinnerMotor1.getVelocity());
+        pTelemetry.addData("turret Pwr", spinnerMotor1.getPower());
+        pTelemetry.addData("turret Target Vel", currentTargets[0]);
+        pTelemetry.addData("turret Target Pitch", currentTargets[1]);
 
     }
 
@@ -354,6 +364,24 @@ public class Turret {
 
     public void removeClutchOverride() {
         isClutchOverride = false;
+    }
+
+    public void resetYawPos() {
+        yawTurretEncoder.zeroHere();
+        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public void setYawPos(double currPos) {
+        RobotConstants.yawTurretStartAngle = TylerMath.wrap(-currPos, 0, 360);
+    }
+
+    public double getYawPos0to360() {
+        if (useAbsEncoder) return yawTurretEncoder.getAngle0to360();
+        return (yawMotor.getCurrentPosition() / YAW_TICKS_PER_REVOLUTION * 360) % 360;
+    }
+
+    public void useAbsToReset() {
+        setYawPos(yawTurretEncoder.getAngle0to360());
     }
 
     public void init(HardwareMap hardwareMap) {

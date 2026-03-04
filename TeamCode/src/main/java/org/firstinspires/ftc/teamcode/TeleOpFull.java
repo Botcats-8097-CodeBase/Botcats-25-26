@@ -224,7 +224,7 @@ public class TeleOpFull extends OpMode {
 
         // reset turret 0
         if (gamepad1.yWasPressed()) {
-            turret.yawTurretEncoder.zeroHere();
+            turret.resetYawPos();e
         }
     }
 

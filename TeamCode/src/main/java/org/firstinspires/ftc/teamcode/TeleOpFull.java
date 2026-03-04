@@ -224,7 +224,7 @@ public class TeleOpFull extends OpMode {
 
         // reset turret 0
         if (gamepad1.yWasPressed()) {
-            turret.resetYawPos();e
+            turret.resetYawPos();
         }
     }
 
@@ -233,13 +233,14 @@ public class TeleOpFull extends OpMode {
         super.start();
         et.reset();
 
-        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null) {
+        if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null && blackboard.get("yawPos") != null) {
             initPose = new Pose2D(
                     DistanceUnit.INCH,
                     (double) blackboard.get("x"),
                     (double) blackboard.get("y"),
                     AngleUnit.DEGREES,
                     TylerMath.wrap(((double) blackboard.get("heading")), -180, 180));
+            turret.setYawPos((double) blackboard.get("yawPos"));
         } else {
             if (!isRed) {
                 if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180); // 65.315 -8.38 180 270

@@ -235,5 +235,6 @@ public class Auto12Actioned2 extends OpMode {
         blackboard.put("x", con[0]);
         blackboard.put("y", con[1]);
         blackboard.put("heading", con[2]);
+        blackboard.put("yawPos", robot.turret.getYawPos0to360());
     }
 }

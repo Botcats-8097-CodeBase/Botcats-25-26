@@ -242,5 +242,6 @@ public class MoveForwardShoot6Special extends OpMode {
         blackboard.put("x", -follower.getPose().getY() + 72);
         blackboard.put("y", follower.getPose().getX() - 72);
         blackboard.put("heading", Math.toDegrees(follower.getPose().getHeading()) - 90);
+        blackboard.put("yawPos", robot.turret.getYawPos0to360());
     }
 }

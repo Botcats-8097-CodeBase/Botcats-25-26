@@ -423,5 +423,6 @@ public class POF30 extends OpMode {
         blackboard.put("x", con[0] - 2.2);
         blackboard.put("y", con[1] - 0.1);
         blackboard.put("heading", con[2]);
+        blackboard.put("yawPos", robot.turret.getYawPos0to360());
     }
 }

@@ -377,7 +377,7 @@ public class Turret {
 
     public double getYawPos0to360() {
         if (useAbsEncoder) return yawTurretEncoder.getAngle0to360();
-        return (yawMotor.getCurrentPosition() / YAW_TICKS_PER_REVOLUTION * 360) % 360;
+        return (yawMotor.getEncoderPosition() / YAW_TICKS_PER_REVOLUTION * 360) % 360;
     }
 
     public void useAbsToReset() {

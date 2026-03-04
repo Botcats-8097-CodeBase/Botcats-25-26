@@ -58,6 +58,8 @@ public class RunToMotor {
         return currentPos;
     }
 
+    public double getEncoderPosition() { return motor.getCurrentPosition(); }
+
     public void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior zeroPowerBehavior) {
         motor.setZeroPowerBehavior(zeroPowerBehavior);
     }

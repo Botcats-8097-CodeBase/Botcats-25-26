@@ -41,20 +41,24 @@ public class POF30Actioned2 extends OpMode {
     public double intakeAngle = 180;
     public double turretAngle = 45;
 
-    public double shootTimeSec = 1;
+    public double shootTimeSec = 1.5;
     public double trans1Sec = 0.8;
     public double trans2Sec = 0.8;
 
     private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE, transativeMPose, transativeEPose;
     private Path scorePreload;
-    private PathChain parkPath, ethanPath1, ethanPath2, ethanPath3, transitivePath1, transitivePath2, transitivePath15;
+
+    private PathChain parkPath, ethanPath1A, ethanPath1B, ethanPath2A, ethanPath2B, ethanPath3A, ethanPath3B;
+    private PathChain transitivePath1, transitivePath2, transitivePath15;
+
+
     public void buildPaths() {
         if (!isRed) {
             if (isClose)
                 startPose = AutoConstants.blueCloseStartPos;
             else
                 startPose = AutoConstants.blueFarStartPos;
-            scorePose = new Pose(56.5 - 4, 84 - 10, Math.toRadians(180));
+            scorePose = new Pose(56.5 - 4, 84 - 9, Math.toRadians(180));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
 
             transativeEPose = new Pose(8, 58, Math.toRadians(150));
@@ -75,9 +79,8 @@ public class POF30Actioned2 extends OpMode {
             robot.turret.presetOffset = new double[]{0.0, 0.1};
         }
 
-
-        firstStripS = new Pose(stripXCordS, 85, Math.toRadians(intakeAngle));
-        firstStripE = new Pose(stripXCordE, 85, Math.toRadians(intakeAngle));
+        firstStripS = new Pose(stripXCordS, 86, Math.toRadians(intakeAngle));
+        firstStripE = new Pose(stripXCordE, 86, Math.toRadians(intakeAngle));
         secondStripS = new Pose(stripXCordS, 56, Math.toRadians(intakeAngle));
         secondStripE = new Pose(stripXCordE + intakeOffset, 56, Math.toRadians(intakeAngle));
         thirdStripS = new Pose(stripXCordS, 38, Math.toRadians(intakeAngle));
@@ -92,17 +95,23 @@ public class POF30Actioned2 extends OpMode {
                 .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
                 .build();
 
-        ethanPath1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, firstStripS))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), firstStripS.getHeading())
-                .addPath(new BezierLine(firstStripS, firstStripE))
-                .setLinearHeadingInterpolation(firstStripS.getHeading(), firstStripE.getHeading())
+        ethanPath1A = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                scorePose,
+                                new Pose(36.700, 86.000),
+                                firstStripE
+                        )
+                )
+                .build();
+
+        ethanPath1B = follower.pathBuilder()
                 .addPath(new BezierLine(firstStripE, scorePose))
                 .setLinearHeadingInterpolation(firstStripE.getHeading(), scorePose.getHeading())
                 .setBrakingStart(1)
                 .build();
 
-        ethanPath2 = follower.pathBuilder()
+        ethanPath2A = follower.pathBuilder()
                 .addPath(
                         new BezierCurve(
                                 scorePose,
@@ -111,6 +120,10 @@ public class POF30Actioned2 extends OpMode {
                         )
                 )
                 .setLinearHeadingInterpolation(scorePose.getHeading(), secondStripE.getHeading())
+                .setGlobalDeceleration(1)
+                .build();
+
+        ethanPath2B = follower.pathBuilder()
                 .addPath(
                         new BezierCurve(
                                 secondStripE,
@@ -122,11 +135,14 @@ public class POF30Actioned2 extends OpMode {
                 .setGlobalDeceleration(1)
                 .build();
 
-        ethanPath3 = follower.pathBuilder()
+        ethanPath3A = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, thirdStripS))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), thirdStripS.getHeading())
                 .addPath(new BezierLine(thirdStripS, thirdStripE))
                 .setLinearHeadingInterpolation(thirdStripS.getHeading(), thirdStripE.getHeading())
+                .build();
+
+        ethanPath3B = follower.pathBuilder()
                 .addPath(new BezierLine(thirdStripE, scorePose))
                 .setLinearHeadingInterpolation(thirdStripE.getHeading(), scorePose.getHeading())
                 .build();
@@ -170,6 +186,7 @@ public class POF30Actioned2 extends OpMode {
 
     public Action buildAction() {
         return new ActionBuilder()
+                // Preloads
                 .doNow(() -> {
                     follower.followPath(scorePreload);
                     robot.turret.spinUp();
@@ -178,124 +195,165 @@ public class POF30Actioned2 extends OpMode {
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, shootTimeSec)
-                .loopFor(t -> {
-                    robot.turret.stopIntake();
-                    robot.turret.stopShootSequence();
-                }, 1)
+                // ^ Preloads
+
+                // Middle Path
                 .doNow(() -> {
-                    follower.followPath(ethanPath2, 0.85, true);
+                    robot.turret.triggerIntake();
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath2A, 0.9, true);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> {
+                    robot.turret.stopIntake();
+                    follower.followPath(ethanPath2B, 1, true);
+                })
+                .wait(0.5)
+                .doNow(() -> {
+                    robot.turret.blockOverride(false);
+                    robot.turret.clutchOverride(true);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, shootTimeSec)
+                .doNow(() -> {
+                    robot.turret.removeBlockOverride();
+                    robot.turret.removeClutchOverride();
+                })
+                // ^ Middle Path
+
+                // Transitive 1
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(transitivePath1, 0.9, true);
+                })
+                .wait(0.5)
+                .doNow(() -> robot.turret.triggerIntake())
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.triggerIntake();
+                }, trans1Sec)
+                .doNow(() -> {
+                    follower.followPath(transitivePath15);
+                    robot.turret.stopIntake();
+                })
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.blockOverride(false);
+                    robot.turret.clutchOverride(true);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> follower.followPath(transitivePath2))
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, shootTimeSec)
+                .doNow(() -> {
+                    robot.turret.removeBlockOverride();
+                    robot.turret.removeClutchOverride();
+                })
+                // ^ Transitive 1
+
+                // Transitive 2
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(transitivePath1, 0.9, true);
+                })
+                .wait(0.5)
+                .doNow(() -> robot.turret.triggerIntake())
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.triggerIntake();
+                }, trans1Sec)
+                .doNow(() -> {
+                    follower.followPath(transitivePath15);
+                    robot.turret.stopIntake();
+                })
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.blockOverride(false);
+                    robot.turret.clutchOverride(true);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> follower.followPath(transitivePath2))
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, shootTimeSec)
+                .doNow(() -> {
+                    robot.turret.removeBlockOverride();
+                    robot.turret.removeClutchOverride();
+                })
+                // ^ Transitive 2
+
+                // Transitive 3
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(transitivePath1, 0.9, true);
+                })
+                .wait(0.5)
+                .doNow(() -> robot.turret.triggerIntake())
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.triggerIntake();
+                }, trans1Sec)
+                .doNow(() -> {
+                    follower.followPath(transitivePath15);
+                    robot.turret.stopIntake();
+                })
+                .wait(trans2Sec)
+                .doNow(() -> {
+                    robot.turret.blockOverride(false);
+                    robot.turret.clutchOverride(true);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> follower.followPath(transitivePath2))
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, shootTimeSec)
+                .doNow(() -> {
+                    robot.turret.removeBlockOverride();
+                    robot.turret.removeClutchOverride();
+                })
+                // ^ Transitive 3
+
+                // Close Path
+                .doNow(() -> {
+                    robot.turret.triggerIntake();
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath1A, 0.9, true);
                 })
                 .loopUntil(() -> {
                     robot.turret.triggerIntake();
                     robot.turret.spinUp();
                 }, () -> !follower.isBusy())
                 .doNow(() -> {
+                    follower.followPath(ethanPath1B, 1, true);
                     robot.turret.stopIntake();
-                })
-                .loopFor(t -> {
-                    robot.turret.continueShootSequence();
-                }, 2.5)
-
-
-                .doNow(() -> {
-                    robot.turret.stopShootSequence();
-                    follower.followPath(transitivePath1, 0.9, true);
                 })
                 .wait(0.5)
-                .doNow(() -> robot.turret.triggerIntake())
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.triggerIntake();
-                }, trans1Sec)
                 .doNow(() -> {
-                    follower.followPath(transitivePath15);
-                    robot.turret.stopIntake();
+                    robot.turret.blockOverride(false);
+                    robot.turret.clutchOverride(true);
                 })
-                .wait(trans2Sec)
-                .doNow(() -> {
-                    robot.turret.unBlock();
-                    robot.turret.clutch();
-                })
-                .waitUntil(() -> !follower.isBusy())
-                .doNow(() -> follower.followPath(transitivePath2))
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
                 }, shootTimeSec)
+                // ^ Close Path
 
 
                 .doNow(() -> {
-                    robot.turret.stopShootSequence();
-                    follower.followPath(transitivePath1, 0.9, true);
-                })
-                .wait(0.5)
-                .doNow(() -> robot.turret.triggerIntake())
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.triggerIntake();
-                }, trans1Sec)
-                .doNow(() -> {
-                    follower.followPath(transitivePath15);
                     robot.turret.stopIntake();
-                })
-                .wait(trans2Sec)
-                .doNow(() -> {
-                    robot.turret.unBlock();
-                    robot.turret.clutch();
-                })
-                .waitUntil(() -> !follower.isBusy())
-                .doNow(() -> follower.followPath(transitivePath2))
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.continueShootSequence();
-                }, shootTimeSec)
-
-
-
-
-                .doNow(() -> {
                     robot.turret.stopShootSequence();
-                    follower.followPath(transitivePath1, 0.9, true);
+                    follower.followPath(parkPath, 1, true);
                 })
-                .wait(0.5)
-                .doNow(() -> robot.turret.triggerIntake())
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.triggerIntake();
-                }, trans1Sec)
-                .doNow(() -> {
-                    follower.followPath(transitivePath15);
-                    robot.turret.stopIntake();
-                })
-                .wait(trans2Sec)
-                .doNow(() -> {
-                    robot.turret.unBlock();
-                    robot.turret.clutch();
-                })
-                .waitUntil(() -> !follower.isBusy())
-                .doNow(() -> follower.followPath(transitivePath2))
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.continueShootSequence();
-                }, shootTimeSec)
 
 
-                .doNow(() -> {
-                    robot.turret.triggerIntake();
-                    robot.turret.stopShootSequence();
-                    follower.followPath(ethanPath1, 0.85, true);
-                })
-                .loopUntil(() -> {
-                    robot.turret.triggerIntake();
-                }, () -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.continueShootSequence();
-                }, 2)
-                .doNow(() -> {
-                    robot.turret.triggerIntake();
-                    robot.turret.stopShootSequence();
-                    follower.followPath(parkPath, 0.85, true);
-                })
+
+
                 .build();
     }
 

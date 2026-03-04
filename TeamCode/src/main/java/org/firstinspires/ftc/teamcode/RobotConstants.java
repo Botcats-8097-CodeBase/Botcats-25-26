@@ -24,7 +24,7 @@ public class RobotConstants {
     public static String highColorSensorName = "highColor";
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartAngle = 26.6;
+    public static double yawTurretStartAngle = 88.85;
     public static double yawTurretMaxAngle = 150;
     public static double yawTurretMinAngle = -40;
 

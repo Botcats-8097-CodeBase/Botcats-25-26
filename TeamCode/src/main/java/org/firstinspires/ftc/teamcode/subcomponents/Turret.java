@@ -57,8 +57,9 @@ public class Turret {
     boolean isBlocking = true;
     boolean wasClutching = false;
     boolean isClutched = true;
-
     boolean isSpinningUp = false;
+    boolean isBlockOverride = false;
+    boolean isClutchOverride = false;
     IntakeState intakeState = IntakeState.STOP;
 
     double[] robotPos = {0, 0, 0};
@@ -87,6 +88,9 @@ public class Turret {
 
         boolean isShootClose = robotPos[0] < 40;
         double[] basePreset = isShootClose ? RobotConstants.closestSpeedPreset.clone() : RobotConstants.fullSpeedPreset.clone();
+        double[] goal = goalPos();
+        double baseDist = 77;
+        distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
 
         if (targetPreset[0] == -1) {
             double shootSpeed = basePreset[0];
@@ -116,33 +120,22 @@ public class Turret {
 
                 double kv = isShootClose ? 0.1 : 0.4; // increased far kv from 0.3
                 pos += error * kv;
+
                 pos = clip(pos, 0.0, 1.0);
                 pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
 
                 pos += presetOffset[1];
 
                 currentTargets[1] = pos;
-
-                teleData("Check Data check", true);
             }
         } else {
             currentTargets[1] = targetPreset[1];
-            teleData("Check Data check", false);
         }
-
-        teleData("Check Data speed", currentTargets[0]);
-        teleData("Check Data angle", currentTargets[1]);
-
 
         if (isShooting) {
             wasShooting = true;
 
-            double[] goal = goalPos();
-            double baseDist = 77;
-            distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
-
             if (spinnerMotor1.isAtTargetVelocity() || shootStartTimeMs != -1) {
-                //this code is made when we want a shoot sequence (we don't need this right now)
                 if (shootStartTimeMs == -1) {
                     shootStartTimeMs = et.milliseconds();
                     if (isClutched) {
@@ -167,6 +160,7 @@ public class Turret {
                 intakeMotor.setPower(0);
                 block();
             }
+
 
             spinnerMotor1.setTargetVelocity(currentTargets[0]);
             pitchTurretServo.setPosition(currentTargets[1]);
@@ -312,24 +306,54 @@ public class Turret {
         if (pTelemetry != null) pTelemetry.addData(caption, data);
     }
 
-    public void block() {
+    void block() {
+        if (isBlockOverride) return;
         isBlocking = true;
         blockerServo.setPosition(RobotConstants.blockerBlockingPos);
     }
 
-    public void unBlock() {
+    void unBlock() {
+        if (isBlockOverride) return;
         isBlocking = false;
         blockerServo.setPosition(RobotConstants.blockerShootingPos);
     }
 
-    public void clutch() {
+    void clutch() {
+        if (isClutchOverride) return;
         isClutched = true;
         clutchServo.setPosition(RobotConstants.clutchEndPos);
     }
 
-    public void unClutch() {
+    void unClutch() {
+        if (isClutchOverride) return;
         isClutched = false;
         clutchServo.setPosition(RobotConstants.clutchStartPos);
+    }
+
+    public void blockOverride(boolean isBlocking) {
+        if (isBlocking) {
+            block();
+        } else {
+            unBlock();
+        }
+        isBlockOverride = true;
+    }
+
+    public void removeBlockOverride() {
+        isBlockOverride = false;
+    }
+
+    public void clutchOverride(boolean isClutched) {
+        if (isClutched) {
+            clutch();
+        } else {
+            unClutch();
+        }
+        isClutchOverride = true;
+    }
+
+    public void removeClutchOverride() {
+        isClutchOverride = false;
     }
 
     public void init(HardwareMap hardwareMap) {
@@ -337,7 +361,7 @@ public class Turret {
         yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         yawMotor.setTargetPosition(0);
         yawMotor.setPosController(new PIDController(0.015, 0.0002, 0, 100));
-        yawMotor.setMaxPower(0.4);
+        yawMotor.setMaxPower(0);
 
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);

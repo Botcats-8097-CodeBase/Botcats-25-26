@@ -27,7 +27,7 @@ public class Turret {
         REVERSE
     }
 
-    public static final double YAW_TICKS_PER_REVOLUTION = 145.090909;
+    public static final double YAW_TICKS_PER_DEGREE = 3.6027;
 
     public RunToMotor yawMotor = new RunToMotor();
     public AS5600 yawTurretEncoder;
@@ -82,7 +82,6 @@ public class Turret {
 
         //TODO: Make this better in the future
         double inputYaw = getYawPos0to360();
-        teleData("input Raw Raw", yawTurretEncoder.getAngle0to360());
         if (inputYaw > 270) {
             inputYaw -= 360;
         }
@@ -100,7 +99,7 @@ public class Turret {
             double shootSpeed = basePreset[0];
 
             if (isShootClose && useDistError) {
-                double kS = 0.003;
+                double kS = 0.004;
                 shootSpeed += distError * kS;
             }
 
@@ -377,7 +376,7 @@ public class Turret {
 
     public double getYawPos0to360() {
         if (useAbsEncoder) return yawTurretEncoder.getAngle0to360();
-        return (yawMotor.getEncoderPosition() / YAW_TICKS_PER_REVOLUTION * 360) % 360;
+        return (yawMotor.getEncoderPosition() / YAW_TICKS_PER_DEGREE) % 360;
     }
 
     public void useAbsToReset() {
@@ -387,9 +386,8 @@ public class Turret {
     public void init(HardwareMap hardwareMap) {
         yawMotor.init(hardwareMap, RobotConstants.yawTurretMotorName);
         yawMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        yawMotor.setTargetPosition(0);
         yawMotor.setPosController(new PIDController(0.015, 0.0002, 0, 100));
-        yawMotor.setMaxPower(0);
+        yawMotor.setMaxPower(0.4);
 
         spinnerMotor1.init(hardwareMap, RobotConstants.spinnerMotor1Name);
         spinnerMotor1.setDirection(RobotConstants.spinnerMotor1Direction);

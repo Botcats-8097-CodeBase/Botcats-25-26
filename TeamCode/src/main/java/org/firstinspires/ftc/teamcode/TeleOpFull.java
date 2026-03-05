@@ -62,6 +62,8 @@ public class TeleOpFull extends OpMode {
 
     @Override
     public void loop() {
+        pTelemetry.addLine("---------- TeleOp Full ----------");
+
         float dt = (float) et.milliseconds();
         pTelemetry.addData("dt", dt);
         et.reset();

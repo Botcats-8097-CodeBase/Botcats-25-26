@@ -39,7 +39,7 @@ public class POF30Actioned2 extends OpMode {
     public double stripXCordE = 20;
     public double intakeOffset = -8;
     public double intakeAngle = 180;
-    public double turretAngle = 45;
+    public double turretAngle = 60;
 
     public double shootTimeSec = 1.5;
     public double trans1Sec = 0.8;

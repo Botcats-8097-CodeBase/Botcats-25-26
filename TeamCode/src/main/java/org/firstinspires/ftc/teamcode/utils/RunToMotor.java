@@ -42,8 +42,7 @@ public class RunToMotor {
         currentPower = posController.update(targetPos - currentPos, dt);
 
         currentPower = clip(currentPower, -maxPower, maxPower);
-        if (Math.abs(currentPower) > 0.01)
-            motor.setPower(currentPower);
+        motor.setPower(currentPower);
     }
 
     public void setTargetPosition(double pos) {

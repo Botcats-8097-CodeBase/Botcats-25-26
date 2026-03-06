@@ -100,32 +100,32 @@ public class Turret {
         distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
 
         if (targetPreset[0] == -1) {
-//            double shootSpeed = basePreset[0];
-//
-//            if (isShootClose && useDistError) {
-//                double kS = 0.004;
-//                shootSpeed += distError * kS;
-//            }
-//
-//            shootSpeed += presetOffset[0];
-//            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
-//            currentTargets[0] = shootSpeed;
+            double shootSpeed = basePreset[0];
 
-            double shootSpeed = speedTable.interpolate(distError);
+            if (isShootClose && useDistError) {
+                double kS = 0.004;
+                shootSpeed += distError * kS;
+            }
+
+            shootSpeed += presetOffset[0];
+            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
             currentTargets[0] = shootSpeed;
+
+//            double shootSpeed = speedTable.interpolate(distError);
+//            currentTargets[0] = shootSpeed;
         } else {
             currentTargets[0] = targetPreset[0];
         }
 
         if (targetPreset[1] == -1) {
             if (!spinnerMotor1.velocityFilter.isDataless()) {
-//                double pos = basePreset[1];
-//
-//                if (isShootClose && useDistError) {
-//                    double kP = 0.003;
-//                    pos += distError * kP;
-//                }
-                double pos = angleTable.interpolate(distError);
+                double pos = basePreset[1];
+
+                if (isShootClose && useDistError) {
+                    double kP = 0.003;
+                    pos += distError * kP;
+                }
+//                double pos = angleTable.interpolate(distError);
 
                 double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
 
@@ -375,7 +375,6 @@ public class Turret {
 
     public void resetYawPos() {
         yawTurretEncoder.zeroHere();
-//        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void setYawPos(double currPos) {

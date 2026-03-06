@@ -47,11 +47,15 @@ public class TurretTest extends OpMode {
         if (gamepad1.dpad_down) targetSpeed -= 0.001;
         if (gamepad1.dpad_up) targetSpeed += 0.001;
 
-        if (gamepad1.dpad_left) targetTurretAngle -= 0.001;
-        if (gamepad1.dpad_right) targetTurretAngle += 0.001;
+        if (gamepad1.dpad_left) targetServoAngle -= 0.001;
+        if (gamepad1.dpad_right) targetServoAngle += 0.001;
+
+        if (gamepad1.right_bumper || gamepad2.right_bumper) turret.triggerIntake();
+        else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
+        else turret.stopIntake();
 
         telemetry.addData("turret preset speed", targetSpeed);
-        telemetry.addData("turret preset angle", targetTurretAngle);
+        telemetry.addData("turret preset angle", targetServoAngle);
 
         telemetry.addData("turret Target Vel", targetSpeed);
         telemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
@@ -59,7 +63,6 @@ public class TurretTest extends OpMode {
         telemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
 //        telemetry.addData("turret is stopped", turret.spinnerMotor1.isStopped());
 
-        telemetry.addData("targetTurretAngle", targetTurretAngle);
         turret.faceTo(targetTurretAngle);
 
         telemetry.addData("turret yaw encoder", turret.yawTurretEncoder.getAngle180to180());

@@ -9,16 +9,20 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.sun.tools.javac.util.List;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.testing.TableInterpolation;
 import org.firstinspires.ftc.teamcode.utils.PIDController;
 import org.firstinspires.ftc.teamcode.utils.PIDFController;
 import org.firstinspires.ftc.teamcode.utils.RunToMotor;
 import org.firstinspires.ftc.teamcode.utils.TylerMath;
 import org.firstinspires.ftc.teamcode.utils.VelocityMotor;
+
+import java.util.ArrayList;
 
 public class Turret {
     public enum IntakeState {
@@ -64,7 +68,7 @@ public class Turret {
     boolean isClutchOverride = false;
     IntakeState intakeState = IntakeState.STOP;
 
-    boolean useAbsEncoder = false;
+    double turretYawEncoderOffset = 0;
 
     double[] robotPos = {0, 0, 0};
 
@@ -96,15 +100,18 @@ public class Turret {
         distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
 
         if (targetPreset[0] == -1) {
-            double shootSpeed = basePreset[0];
+//            double shootSpeed = basePreset[0];
+//
+//            if (isShootClose && useDistError) {
+//                double kS = 0.004;
+//                shootSpeed += distError * kS;
+//            }
+//
+//            shootSpeed += presetOffset[0];
+//            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
+//            currentTargets[0] = shootSpeed;
 
-            if (isShootClose && useDistError) {
-                double kS = 0.004;
-                shootSpeed += distError * kS;
-            }
-
-            shootSpeed += presetOffset[0];
-            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
+            double shootSpeed = speedTable.interpolate(distError);
             currentTargets[0] = shootSpeed;
         } else {
             currentTargets[0] = targetPreset[0];
@@ -112,12 +119,13 @@ public class Turret {
 
         if (targetPreset[1] == -1) {
             if (!spinnerMotor1.velocityFilter.isDataless()) {
-                double pos = basePreset[1];
-
-                if (isShootClose && useDistError) {
-                    double kP = 0.003;
-                    pos += distError * kP;
-                }
+//                double pos = basePreset[1];
+//
+//                if (isShootClose && useDistError) {
+//                    double kP = 0.003;
+//                    pos += distError * kP;
+//                }
+                double pos = angleTable.interpolate(distError);
 
                 double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
 
@@ -219,10 +227,10 @@ public class Turret {
         spinnerMotor2.setPower(spinnerMotor1.getPower());
 
 
-        pTelemetry.addData("turret Vel", spinnerMotor1.getVelocity());
-        pTelemetry.addData("turret Pwr", spinnerMotor1.getPower());
-        pTelemetry.addData("turret Target Vel", currentTargets[0]);
-        pTelemetry.addData("turret Target Pitch", currentTargets[1]);
+        teleData("turret Vel", spinnerMotor1.getVelocity());
+        teleData("turret Pwr", spinnerMotor1.getPower());
+        teleData("turret Target Vel", currentTargets[0]);
+        teleData("turret Target Pitch", currentTargets[1]);
 
     }
 
@@ -367,21 +375,74 @@ public class Turret {
 
     public void resetYawPos() {
         yawTurretEncoder.zeroHere();
-        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        yawMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void setYawPos(double currPos) {
-        RobotConstants.yawTurretStartAngle = TylerMath.wrap(-currPos, 0, 360);
+        turretYawEncoderOffset = TylerMath.wrap(currPos, 0, 360);
     }
 
     public double getYawPos0to360() {
-        if (useAbsEncoder) return yawTurretEncoder.getAngle0to360();
-        return (yawMotor.getEncoderPosition() / YAW_TICKS_PER_DEGREE) % 360;
+        return TylerMath.wrap(yawMotor.getEncoderPosition() / YAW_TICKS_PER_DEGREE + turretYawEncoderOffset, 0, 360);
     }
 
     public void useAbsToReset() {
         setYawPos(yawTurretEncoder.getAngle0to360());
     }
+
+    TableInterpolation speedTable = new TableInterpolation(
+            new ArrayList<>(List.of(
+                    -34.11,
+                    -29.71,
+                    -19.57,
+                    -10.19,
+                    -5.07,
+                    0.01,
+                    4.47,
+                    9.22,
+                    13.07,
+                    19.35
+            )),
+            new ArrayList<>(List.of(
+                    1.2,
+                    1.2,
+                    1.23,
+                    1.262,
+                    1.318,
+                    1.4,
+                    1.458,
+                    1.477,
+                    1.517,
+                    1.58
+            ))
+    );
+
+    TableInterpolation angleTable = new TableInterpolation(
+            new ArrayList<>(List.of(
+                    -34.11,
+                    -29.71,
+                    -19.57,
+                    -10.19,
+                    -5.07,
+                    0.01,
+                    4.47,
+                    9.22,
+                    13.07,
+                    19.35
+            )),
+            new ArrayList<>(List.of(
+                    0.324,
+                    0.338,
+                    0.37,
+                    0.4,
+                    0.416,
+                    0.6,
+                    0.619,
+                    0.627,
+                    0.661,
+                    0.627
+            ))
+    );
 
     public void init(HardwareMap hardwareMap) {
         yawMotor.init(hardwareMap, RobotConstants.yawTurretMotorName);

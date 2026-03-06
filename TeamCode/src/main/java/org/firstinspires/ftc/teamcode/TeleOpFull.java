@@ -39,7 +39,7 @@ public class TeleOpFull extends OpMode {
 
     boolean isRed = false;
     String[] color = {"blue", "red"};
-    boolean useAbsToReset = false;
+    boolean useAbsToReset = true;
 
     boolean isClose = true;
     boolean isBlackBoardPos = true;
@@ -215,6 +215,7 @@ public class TeleOpFull extends OpMode {
         pTelemetry.addData("x", blackboard.get("x"));
         pTelemetry.addData("y", blackboard.get("y"));
         pTelemetry.addData("heading", blackboard.get("heading"));
+        pTelemetry.addData("turret heading", blackboard.get("yawPos"));
         pTelemetry.addData("angle", turret.yawTurretEncoder.getAngle180to180());
 
         pTelemetry.update();

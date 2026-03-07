@@ -3,21 +3,19 @@ package org.firstinspires.ftc.teamcode.autos;
 import com.bylazar.telemetry.JoinedTelemetry;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.RobotConstants;
+import org.firstinspires.ftc.teamcode.actions.Action;
+import org.firstinspires.ftc.teamcode.actions.ActionBuilder;
+import org.firstinspires.ftc.teamcode.actions.ActionManager;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.pedroPathing.PedroConversion;
 
@@ -34,7 +32,7 @@ public class Auto12 extends OpMode {
     AutoRobot robot = new AutoRobot();
 
     private Follower follower;
-    private Timer pathTimer, actionTimer, opmodeTimer;
+    private Timer opmodeTimer;
     private int pathState;
 
     public double stripXCoordS = 46;
@@ -44,7 +42,7 @@ public class Auto12 extends OpMode {
 
     private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE;
     private Path scorePreload;
-    private PathChain parkPath, ethanPath1, ethanPath2, ethanPath3;
+    private PathChain parkPath, ethanPath1A, ethanPath1B, ethanPath2A, ethanPath2B, ethanPath3A, ethanPath3B, ethanPath3RA;
     public void buildPaths() {
         if (!isRed) {
             if (isClose)
@@ -85,149 +83,149 @@ public class Auto12 extends OpMode {
                 .setLinearHeadingInterpolation(scorePose.getHeading(), parkPose.getHeading())
                 .build();
 
-        ethanPath1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, firstStripS))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), firstStripS.getHeading())
-                .addPath(new BezierLine(firstStripS, firstStripE))
-                .setLinearHeadingInterpolation(firstStripS.getHeading(), firstStripE.getHeading())
+        ethanPath1A = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                scorePose,
+                                (!isRed) ? new Pose(36.700, 86.000) : new Pose(36.700, 86.000).mirror(),
+                                firstStripE
+                        )
+                )
+                .build();
+
+        ethanPath1B = follower.pathBuilder()
                 .addPath(new BezierLine(firstStripE, scorePose))
                 .setLinearHeadingInterpolation(firstStripE.getHeading(), scorePose.getHeading())
-                .setBrakingStart(0.1)
+                .setBrakingStart(1)
                 .build();
 
-        ethanPath2 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, secondStripS))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), secondStripS.getHeading())
-                .addPath(new BezierLine(secondStripS, secondStripE))
-                .setLinearHeadingInterpolation(secondStripS.getHeading(), secondStripE.getHeading())
-                .addPath(new BezierLine(secondStripE, scorePose))
+        ethanPath2A = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                scorePose,
+                                (!isRed) ? new Pose(55.5, 48) : new Pose(55.5, 48).mirror(),
+                                secondStripE
+                        )
+                )
+                .setLinearHeadingInterpolation(scorePose.getHeading(), secondStripE.getHeading())
+                .setGlobalDeceleration(1)
+                .build();
+
+        ethanPath2B = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                secondStripE,
+                                (!isRed) ? new Pose(55.5, 48) : new Pose(55.5, 48).mirror(),
+                                scorePose
+                        )
+                )
                 .setLinearHeadingInterpolation(secondStripE.getHeading(), scorePose.getHeading())
+                .setGlobalDeceleration(1)
                 .build();
 
-        ethanPath3 = follower.pathBuilder()
+
+        ethanPath3A = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, thirdStripS))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), thirdStripS.getHeading())
                 .addPath(new BezierLine(thirdStripS, thirdStripE))
                 .setLinearHeadingInterpolation(thirdStripS.getHeading(), thirdStripE.getHeading())
+                .build();
+
+        ethanPath3A = follower.pathBuilder()
                 .addPath(new BezierLine(thirdStripE, scorePose))
                 .setLinearHeadingInterpolation(thirdStripE.getHeading(), scorePose.getHeading())
                 .build();
+
+        ethanPath3RA = follower.pathBuilder()
+                .addPath(
+                    new BezierCurve(
+                            scorePose,
+                            new Pose(67.000, 25.000),
+                            new Pose(11.000, 61.500),
+                            new Pose(7.5, 37.5)
+                    )
+                )
+                .setLinearHeadingInterpolation(scorePose.getHeading(), Math.toRadians(0))
+                .build();
     }
 
-    public void autonomousPathUpdate() {
-        switch (pathState) {
-            case 0:
-                follower.followPath(scorePreload);
-                robot.turret.spinUp();
-                setPathState(1);
-                break;
-            case 1:
-                if(!follower.isBusy()) {
-                    setPathState(2);
-                    actionTimer.resetTimer();
-                }
-                break;
-            case 2:
-                robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
-                    actionTimer.resetTimer();
-                    setPathState(3);
-                }
-                break;
-            case 3:
-                robot.turret.stopIntake();
-                robot.turret.stopShootSequence();
-                if (actionTimer.getElapsedTime() > 1000) {
-                    follower.followPath(ethanPath1);
-                    setPathState(4);
-                }
-                break;
-            case 4:
-                robot.turret.triggerIntake();
-                if (!follower.isBusy()) {
-                    setPathState(5);
+    public Action buildAction() {
+        return new ActionBuilder()
+                .doNow(() -> {
+                    follower.followPath(scorePreload);
+                    robot.turret.spinUp();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 3.5)
+
+
+
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath1A);
+                    robot.turret.triggerIntake();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> {
                     robot.turret.stopIntake();
-                    actionTimer.resetTimer();
-                }
-                break;
-            case 5:
-                robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
-                    actionTimer.resetTimer();
-                    setPathState(6);
-                }
-                break;
-// todo START HERE PASTE
-            case 6:
-                robot.turret.stopIntake();
-                robot.turret.stopShootSequence();
-                if (actionTimer.getElapsedTime() > 1000) {
-                    follower.followPath(ethanPath2);
-                    setPathState(7);
-                }
-                break;
-            case 7:
-                robot.turret.triggerIntake();
-                robot.turret.spinUp();
-                if (!follower.isBusy()) {
-                    setPathState(8);
+                    follower.followPath(ethanPath1B);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 2.5)
 
+
+
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath2A);
+                    robot.turret.triggerIntake();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> {
                     robot.turret.stopIntake();
-                    actionTimer.resetTimer();
-                }
-                break;
-            case 8:
-                robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
-                    actionTimer.resetTimer();
-                    setPathState(9);
-                }
-                break;
+                    follower.followPath(ethanPath2B);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 2.5)
 
-            case 9:
-                robot.turret.stopIntake();
-                robot.turret.stopShootSequence();
-                if (actionTimer.getElapsedTime() > 1000) {
-                    follower.followPath(ethanPath3);
-                    setPathState(10);
-                }
-                break;
-            case 10:
-                robot.turret.triggerIntake();
-                robot.turret.spinUp();
-                if (!follower.isBusy()) {
-                    setPathState(11);
+
+
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath2A);
+                    robot.turret.triggerIntake();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> {
                     robot.turret.stopIntake();
-                    actionTimer.resetTimer();
-                }
-                break;
-            case 11:
-                robot.turret.continueShootSequence();
-                if (actionTimer.getElapsedTime() > 3500) {
-                    actionTimer.resetTimer();
-                    setPathState(12);
-                }
-                break;
+                    follower.followPath(ethanPath2B);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 2.5)
 
-            case 12:
-                robot.turret.stopIntake();
-                follower.followPath(parkPath);
-                robot.turret.stopShootSequence();
-                setPathState(13);
-                break;
-        }
-    }
 
-    public void setPathState(int pState) {
-        pathState = pState;
-        pathTimer.resetTimer();
+
+                .doNow(() -> {
+                    robot.turret.stopIntake();
+                    follower.followPath(parkPath);
+                    robot.turret.stopShootSequence();
+                })
+                .build();
+
     }
 
     @Override
     public void loop() {
 
         follower.update();
-        autonomousPathUpdate();
         TylerDrawing.draw(follower);
 
         robot.turret.updatePose(
@@ -239,22 +237,24 @@ public class Auto12 extends OpMode {
 
         pTelemetry.addData("turret Current Vel", robot.turret.spinnerMotor1.getVelocity());
         pTelemetry.addData("path state", pathState);
+
+        ActionManager.update();
+
         pTelemetry.update();
     }
 
     @Override
     public void init() {
-        pathTimer = new Timer();
         opmodeTimer = new Timer();
-        actionTimer = new Timer();
         opmodeTimer.resetTimer();
 
         robot.init(hardwareMap);
-//        robot.turret.useDistError(false);
 
         follower = Constants.createFollower(hardwareMap);
 
         robot.turret.pTelemetry = pTelemetry;
+
+        ActionManager.schedule(buildAction());
     }
 
     @Override
@@ -276,7 +276,6 @@ public class Auto12 extends OpMode {
         follower.setStartingPose(startPose);
 
         opmodeTimer.resetTimer();
-        setPathState(0);
     }
 
     @Override
@@ -285,5 +284,6 @@ public class Auto12 extends OpMode {
         blackboard.put("x", con[0]);
         blackboard.put("y", con[1]);
         blackboard.put("heading", con[2]);
+        blackboard.put("yawPos", robot.turret.getYawPos0to360());
     }
 }

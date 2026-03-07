@@ -18,7 +18,7 @@ public class RobotConstants {
 
     public static String intakeMotorName = "intake";
     public static DcMotorSimple.Direction intakeMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static double intakeMotorPower = 0.85;
+    public static double intakeMotorPower = 0.9;
 
     public static String lowColorSensorName = "lowColor";
     public static String highColorSensorName = "highColor";
@@ -38,10 +38,10 @@ public class RobotConstants {
     public static String pitchTurretServoName = "pitchTurret";
 
     public static String clutchServoName = "clutch";
-    public static double clutchStartPos = 0; //this should be in the "locked-disengaged" position
+    public static double clutchStartPos = 0.485; //this should be in the "locked-disengaged" position
     // if we want free spin but disengaged, value = 0.67
     // if we want locked spin and disengaged, value = 0.68
-    public static double clutchEndPos = 0.424;
+    public static double clutchEndPos = 0.31;
 
     public static String blockerServoName = "blocker";
     public static double blockerBlockingPos = 0.108;
@@ -50,5 +50,5 @@ public class RobotConstants {
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
     public static double[] fullSpeedPreset = {2.20, 0.80}; // 70
     public static double[] closestSpeedPreset = {1.633, 0.67}; //{1.45, 0.50};
-
+//69
 }

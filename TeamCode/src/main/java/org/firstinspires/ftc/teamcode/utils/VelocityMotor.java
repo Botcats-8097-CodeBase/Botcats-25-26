@@ -19,7 +19,7 @@ public class VelocityMotor {
     double targetVelocity = 0;
 
     // errorBounds before: 5
-    public NoiseFilter velocityFilter = new NoiseFilter(0.7, 25);
+    public NoiseFilter velocityFilter = new NoiseFilter(0.7, 5);
     NoiseFilter accelerationFilter = new NoiseFilter(0.7, 5);
 
     boolean isStopped = true;

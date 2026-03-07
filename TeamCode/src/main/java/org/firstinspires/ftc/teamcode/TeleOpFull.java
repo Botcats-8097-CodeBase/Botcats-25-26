@@ -39,7 +39,7 @@ public class TeleOpFull extends OpMode {
 
     boolean isRed = false;
     String[] color = {"blue", "red"};
-    boolean useAbsToReset = true;
+    boolean useAbsToReset = false;
 
     boolean isClose = true;
     boolean isBlackBoardPos = true;
@@ -180,8 +180,6 @@ public class TeleOpFull extends OpMode {
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
         pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
 
-
-
         pTelemetry.update();
 
         ActionManager.update();
@@ -225,6 +223,8 @@ public class TeleOpFull extends OpMode {
         if (gamepad1.xWasPressed()) isBlackBoardPos = !isBlackBoardPos;
         if (gamepad1.backWasPressed()) useAbsToReset = !useAbsToReset;
 
+        turret.presetOffset = new double[]{0.1, 0};
+
         // reset turret 0
         if (gamepad1.yWasPressed()) {
             turret.resetYawPos();
@@ -246,8 +246,8 @@ public class TeleOpFull extends OpMode {
             turret.setYawPos((double) blackboard.get("yawPos"));
         } else {
             if (!isRed) {
-                if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180); // 65.315 -8.38 180 270
-                else initPose = new Pose2D(DistanceUnit.INCH, -63.5, -8.5, AngleUnit.DEGREES, 180);
+                if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, -8.5, AngleUnit.DEGREES, 180);
+                else initPose = new Pose2D(DistanceUnit.INCH, -57.3, -45, AngleUnit.DEGREES, 225);
 
             } else {
                 if (isClose) initPose = new Pose2D(DistanceUnit.INCH, 63.5, 8.5, AngleUnit.DEGREES, 180);

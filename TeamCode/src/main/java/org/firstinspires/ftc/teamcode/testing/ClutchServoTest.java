@@ -19,7 +19,7 @@ public class ClutchServoTest extends OpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    double serverPos = 0;
+    double serverPos = 0.31;
 
     @Override
     public void init() {
@@ -40,11 +40,11 @@ public class ClutchServoTest extends OpMode {
         if (gamepad1.b) {
             serverPos -= 0.001;
         }
-        if (serverPos > 0.44) {
-            serverPos = 0.44;
+        if (serverPos > 0.5) {
+            serverPos = 0.5;
         }
-        if (serverPos < 0) {
-            serverPos = 0;
+        if (serverPos < 0.475) {
+            serverPos = 0.475;
         }
     }
 }

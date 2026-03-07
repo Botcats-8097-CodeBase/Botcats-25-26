@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.testing;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -14,6 +16,7 @@ import java.util.List;
 public class TurretTest extends OpMode {
 
     List<LynxModule> allHubs;
+    JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     Turret turret = new Turret();
 
@@ -54,22 +57,14 @@ public class TurretTest extends OpMode {
         else if (gamepad1.left_bumper || gamepad2.left_bumper) turret.reverseIntake();
         else turret.stopIntake();
 
-        telemetry.addData("turret preset speed", targetSpeed);
-        telemetry.addData("turret preset angle", targetServoAngle);
-
-        telemetry.addData("turret Target Vel", targetSpeed);
-        telemetry.addData("turret Current Vel", turret.spinnerMotor1.getVelocity());
-        telemetry.addData("turret Current Accel", turret.spinnerMotor1.getCurrentAcceleration());
-        telemetry.addData("turret Current Pwr", turret.spinnerMotor1.getPower());
-//        telemetry.addData("turret is stopped", turret.spinnerMotor1.isStopped());
+        pTelemetry.addData("turret preset speed", targetSpeed);
+        pTelemetry.addData("turret preset angle", targetServoAngle);
 
         turret.faceTo(targetTurretAngle);
 
-        telemetry.addData("turret yaw encoder", turret.yawTurretEncoder.getAngle180to180());
-
         turret.loop();
 
-        telemetry.update();
+        pTelemetry.update();
     }
 
     void initRobot() {
@@ -81,6 +76,7 @@ public class TurretTest extends OpMode {
         }
 
         turret.init(hardwareMap);
+        turret.pTelemetry = pTelemetry;
 
         //telemetry.addData("turret Enc", turret.yawTurretMotor.getCurrentPosition());
     }

@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.actions.ActionBuilder;
 import org.firstinspires.ftc.teamcode.actions.ActionManager;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.pedroPathing.PedroConversion;
+import org.firstinspires.ftc.teamcode.subcomponents.Limelight;
 
 @Autonomous(name = "12 had")
 public class HAD12 extends OpMode {
@@ -30,6 +31,7 @@ public class HAD12 extends OpMode {
     ElapsedTime et = new ElapsedTime();
 
     AutoRobot robot = new AutoRobot();
+    Limelight limelight = new Limelight();
 
     private Follower follower;
     private Timer opmodeTimer;
@@ -39,6 +41,7 @@ public class HAD12 extends OpMode {
     public double stripXCoordE = 24;
     public double intakeOffset = -4;
     public double intakeAngle = 180;
+    public Limelight.MosaicPattern mosaicVal;
 
     private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE;
     private Path scorePreload;
@@ -154,21 +157,19 @@ public class HAD12 extends OpMode {
                                 new Pose(66.326, 12.779),
                                 new Pose(11.500, 22.500)
                         )
-                ).setLinearHeadingInterpolation(scorePose.getHeading(), Math.toRadians(250))
+                ).setLinearHeadingInterpolation(scorePose.getHeading(), Math.toRadians(270))
                 .addPath(
                         new BezierLine(
                                 new Pose(11.500, 22.500),
-
-                                new Pose(11.512, 8.500)
+                                new Pose(11.500, 9.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(250), Math.toRadians(270))
-
+                ).setLinearHeadingInterpolation(Math.toRadians(270), Math.toRadians(270))
                 .build();
 
         ethanPath2RB = follower.pathBuilder()
                 .addPath(
                         new BezierCurve(
-                                new Pose(11.512, 8.500),
+                                new Pose(11.500, 9.000),
                                 new Pose(70.116, 7.052),
                                 scorePose
                         )
@@ -212,6 +213,11 @@ public class HAD12 extends OpMode {
     public Action buildAction() {
         return new ActionBuilder()
                 .doNow(() -> {
+                    mosaicVal = Limelight.MosaicPattern.PGP;//limelight.getMosaicPattern();
+                })
+                .wait(1.0)
+
+                .doNow(() -> {
                     follower.followPath(scorePreload);
                     robot.turret.spinUp();
                 })
@@ -224,13 +230,28 @@ public class HAD12 extends OpMode {
 
                 .doNow(() -> {
                     robot.turret.stopShootSequence();
-                    follower.followPath(ethanPath1RA);
+                    if (mosaicVal == Limelight.MosaicPattern.PPG) {
+                        follower.followPath(ethanPath1A);
+                    } else if (mosaicVal == Limelight.MosaicPattern.PGP) {
+                        follower.followPath(ethanPath2A);
+                    } else {
+                        follower.followPath(ethanPath1RA);
+                    }
                     robot.turret.triggerIntake();
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .doNow(() -> {
                     robot.turret.stopIntake();
-                    follower.followPath(ethanPath1RB);
+                    if (mosaicVal == Limelight.MosaicPattern.PPG) {
+                        follower.followPath(ethanPath1B);
+                    }
+                    else if (mosaicVal == Limelight.MosaicPattern.PGP) {
+                        follower.followPath(ethanPath2B);
+                    }
+                    else {
+                        follower.followPath(ethanPath1RB);
+                    }
+
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
@@ -241,13 +262,29 @@ public class HAD12 extends OpMode {
 
                 .doNow(() -> {
                     robot.turret.stopShootSequence();
-                    follower.followPath(ethanPath3A);
+                    if (mosaicVal == Limelight.MosaicPattern.PPG) {
+                        follower.followPath(ethanPath3RA);
+                    }
+                    else if (mosaicVal == Limelight.MosaicPattern.PGP) {
+                        follower.followPath(ethanPath2RA, 0.85, true);
+                    }
+                    else {
+                        follower.followPath(ethanPath3A);
+                    }
                     robot.turret.triggerIntake();
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .doNow(() -> {
                     robot.turret.stopIntake();
-                    follower.followPath(ethanPath3B);
+                    if (mosaicVal == Limelight.MosaicPattern.PPG) {
+                        follower.followPath(ethanPath3RB);
+                    }
+                    else if (mosaicVal == Limelight.MosaicPattern.PGP) {
+                        follower.followPath(ethanPath2RB);
+                    }
+                    else {
+                        follower.followPath(ethanPath3B);
+                    }
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {

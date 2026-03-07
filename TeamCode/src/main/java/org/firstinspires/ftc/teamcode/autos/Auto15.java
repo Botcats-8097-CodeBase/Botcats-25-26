@@ -19,8 +19,8 @@ import org.firstinspires.ftc.teamcode.actions.ActionManager;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.pedroPathing.PedroConversion;
 
-@Autonomous(name = "12 auto")
-public class Auto12 extends OpMode {
+@Autonomous(name = "15 auto")
+public class Auto15 extends OpMode {
     JoinedTelemetry pTelemetry = new JoinedTelemetry(telemetry, PanelsTelemetry.INSTANCE.getFtcTelemetry());
 
     int id;
@@ -41,14 +41,17 @@ public class Auto12 extends OpMode {
     public double intakeAngle = 180;
 
     private Pose startPose, scorePose, parkPose, firstStripS, firstStripE, secondStripS, secondStripE, thirdStripS, thirdStripE;
+    private Pose transativeMPose, transativeEPose;
     private Path scorePreload;
     private PathChain parkPath, ethanPath1A, ethanPath1B, ethanPath2A, ethanPath2B, ethanPath3A, ethanPath3B, ethanPath3RA;
+    private PathChain transitivePath1, transitivePath2, transitivePath15;
     public void buildPaths() {
         if (!isRed) {
             if (isClose)
                 startPose = AutoConstants.blueCloseStartPos;
             else
                 startPose = AutoConstants.blueFarStartPos;
+            transativeEPose = new Pose(8, 63, Math.toRadians(155));
             scorePose = new Pose(53.5, 88, Math.toRadians(135));
             parkPose = new Pose(53.5, 40, Math.toRadians(90));
         } else {
@@ -58,12 +61,13 @@ public class Auto12 extends OpMode {
                 startPose = AutoConstants.redFarStartPos;
             scorePose = new Pose(90.5, 88, Math.toRadians(45));
             parkPose = new Pose(90.5, 40, Math.toRadians(90));
+            transativeEPose = new Pose(8, 63, Math.toRadians(155)).mirror();
             stripXCoordS = 98;
             stripXCoordE = 120;
             intakeOffset = 4;
             intakeAngle = 0;
 
-            robot.turret.presetOffset = new double[]{-0.1, 0.0};
+            robot.turret.presetOffset = new double[]{-0.2, 0.0};
         }
 
 
@@ -74,6 +78,7 @@ public class Auto12 extends OpMode {
         thirdStripS = new Pose(stripXCoordS, 38, Math.toRadians(intakeAngle));
         thirdStripE = new Pose(stripXCoordE + intakeOffset, 38, Math.toRadians(intakeAngle));
 
+        /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
@@ -135,16 +140,28 @@ public class Auto12 extends OpMode {
                 .setLinearHeadingInterpolation(thirdStripE.getHeading(), scorePose.getHeading())
                 .build();
 
-        ethanPath3RA = follower.pathBuilder()
+        transitivePath1 = follower.pathBuilder()
                 .addPath(
-                    new BezierCurve(
-                            scorePose,
-                            new Pose(67.000, 25.000),
-                            new Pose(11.000, 61.500),
-                            new Pose(7.5, 37.5)
-                    )
+                        new BezierCurve(
+                                scorePose,
+                                (!isRed) ? new Pose(52.5, 61.5) : new Pose(52.5, 61.5).mirror(),
+                                transativeEPose
+                        )
                 )
-                .setLinearHeadingInterpolation(scorePose.getHeading(), Math.toRadians(0))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), transativeEPose.getHeading())
+                .setGlobalDeceleration(1)
+                .build();
+
+        transitivePath2 = follower.pathBuilder()
+                .addPath(
+                        new BezierCurve(
+                                transativeEPose,
+                                (!isRed) ? new Pose(52.5, 61.5) : new Pose(52.5, 61.5).mirror(),
+                                scorePose
+                        )
+                )
+                .setLinearHeadingInterpolation(transativeEPose.getHeading(), scorePose.getHeading())
+                .setGlobalDeceleration(1)
                 .build();
     }
 
@@ -153,23 +170,6 @@ public class Auto12 extends OpMode {
                 .doNow(() -> {
                     follower.followPath(scorePreload);
                     robot.turret.spinUp();
-                })
-                .waitUntil(() -> !follower.isBusy())
-                .loopFor(t -> {
-                    robot.turret.continueShootSequence();
-                }, 3.5)
-
-
-
-                .doNow(() -> {
-                    robot.turret.stopShootSequence();
-                    follower.followPath(ethanPath1A);
-                    robot.turret.triggerIntake();
-                })
-                .waitUntil(() -> !follower.isBusy())
-                .doNow(() -> {
-                    robot.turret.stopIntake();
-                    follower.followPath(ethanPath1B);
                 })
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
@@ -191,7 +191,42 @@ public class Auto12 extends OpMode {
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 2.5)
+                }, 1.7)
+
+
+
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(transitivePath1);
+                    robot.turret.triggerIntake();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .wait(1.0)
+                .doNow(() -> {
+                    robot.turret.stopIntake();
+                    follower.followPath(transitivePath2);
+                })                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 1.7)
+
+
+
+
+                .doNow(() -> {
+                    robot.turret.stopShootSequence();
+                    follower.followPath(ethanPath1A);
+                    robot.turret.triggerIntake();
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .doNow(() -> {
+                    robot.turret.stopIntake();
+                    follower.followPath(ethanPath1B);
+                })
+                .waitUntil(() -> !follower.isBusy())
+                .loopFor(t -> {
+                    robot.turret.continueShootSequence();
+                }, 1.7)
 
 
 
@@ -208,7 +243,7 @@ public class Auto12 extends OpMode {
                 .waitUntil(() -> !follower.isBusy())
                 .loopFor(t -> {
                     robot.turret.continueShootSequence();
-                }, 2.5)
+                }, 1.7)
 
 
 

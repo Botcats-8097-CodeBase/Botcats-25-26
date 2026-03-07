@@ -136,44 +136,12 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_down) turretOffset += 2;
             if (gamepad1.dpad_up) turretOffset -= 2;
 
-            double turretLimelightDistance = 5.5;
-            double turretBodyDistance = 1;
-            Pose3D camPose = limelight.limePosFace();
+            turret.updatePose(new double[]{robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw});
+            double facingTarget = turret.autoFace() + turretOffset;
+            turret.faceTo(facingTarget);
 
-            if (camPose == null) {
-                if ((getRuntime() - lastTimeSeenLimelight) > 0.8) {
-                    turret.updatePose(new double[]{robotPos.getX(DistanceUnit.INCH), robotPos.getY(DistanceUnit.INCH), yaw});
-                    double facingTarget = turret.autoFace() + turretOffset;
-                    turret.faceTo(facingTarget);
-
-
-                    pTelemetry.addData("facingTarget", facingTarget);
-                    pTelemetry.addData("distError", turret.distError);
-                }
-            } else {
-                camPose.getPosition().x *= 39.37;
-                camPose.getPosition().y *= 39.37;
-                double[] limelightOffset = Limelight.offsetTurret(yaw - turret.getCurrentFacing() - 3, turretLimelightDistance);
-                camPose.getPosition().x += limelightOffset[0];
-                camPose.getPosition().y += limelightOffset[1];
-                pTelemetry.addData("lime offset x", limelightOffset[0]);
-                pTelemetry.addData("lime offset y", limelightOffset[1]);
-                limelightOffset = Limelight.offsetTurret(yaw - 170, turretBodyDistance);
-                camPose.getPosition().x += limelightOffset[0];
-                camPose.getPosition().y += limelightOffset[1];
-
-                turret.updatePose(new double[]{camPose.getPosition().x, camPose.getPosition().y, yaw});
-                double limePosFace = turret.autoFace() + turretOffset;
-                turret.faceTo(limePosFace);
-
-                lastTimeSeenLimelight = getRuntime();
-                pTelemetry.addData("limePosFace", limePosFace);
-                pTelemetry.addData("lime pos x", camPose.getPosition().x);
-                pTelemetry.addData("lime pos y", camPose.getPosition().y);
-
-                pTelemetry.addData("lime offset x", limelightOffset[0]);
-                pTelemetry.addData("lime offset y", limelightOffset[1]);
-            }
+            pTelemetry.addData("facingTarget", facingTarget);
+            pTelemetry.addData("distError", turret.distError);
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
@@ -223,7 +191,9 @@ public class TeleOpFull extends OpMode {
         if (gamepad1.xWasPressed()) isBlackBoardPos = !isBlackBoardPos;
         if (gamepad1.backWasPressed()) useAbsToReset = !useAbsToReset;
 
-        turret.presetOffset = new double[]{0.1, 0};
+        turret.vectorDrop();
+
+//        turret.presetOffset = new double[]{0.1, 0};
 
         // reset turret 0
         if (gamepad1.yWasPressed()) {
@@ -264,6 +234,7 @@ public class TeleOpFull extends OpMode {
         if (useAbsToReset) {
             turret.useAbsToReset();
         }
+
 
         odo.setPose(initPose);
         turret.setGoalColor(isRed);

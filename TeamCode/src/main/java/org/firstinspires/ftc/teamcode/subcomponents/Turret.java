@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.sun.tools.javac.util.List;
 
@@ -41,6 +42,7 @@ public class Turret {
     public Servo clutchServo;
     public DcMotor intakeMotor;
     public Servo blockerServo;
+    public Servo vectorServo;
     public CustomColorSensor lowColor = new CustomColorSensor();
     public CustomColorSensor highColor = new CustomColorSensor();
 
@@ -102,18 +104,10 @@ public class Turret {
         distError = Math.sqrt(Math.pow(goal[0] - robotPos[0], 2) + Math.pow(goal[1] - robotPos[1], 2)) - baseDist;
 
         if (targetPreset[0] == -1) {
-//            double shootSpeed = basePreset[0];
-//
-//            if (isShootClose && useDistError) {
-//                double kS = 0.004;
-//                shootSpeed += distError * kS;
-//            }
-//
-//            shootSpeed += presetOffset[0];
-//            shootSpeed = clip(shootSpeed, basePreset[0] - 0.3, basePreset[0] + 0.3);
-//            currentTargets[0] = shootSpeed;
+            double base = basePreset[0];
 
             double shootSpeed = speedTable.interpolate(distError);
+            shootSpeed = clip(shootSpeed, base - 0.3, base + 0.3);
             shootSpeed += presetOffset[0];
             currentTargets[0] = shootSpeed;
         } else {
@@ -122,12 +116,7 @@ public class Turret {
 
         if (targetPreset[1] == -1) {
             if (!spinnerMotor1.velocityFilter.isDataless()) {
-//                double pos = basePreset[1];
-//
-//                if (isShootClose && useDistError) {
-//                    double kP = 0.003;
-//                    pos += distError * kP;
-//                }
+                double base = basePreset[1];
                 double pos = angleTable.interpolate(distError);
 
                 double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
@@ -136,7 +125,7 @@ public class Turret {
                 pos += error * kv;
 
                 pos = clip(pos, 0.0, 1.0);
-                pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
+                pos = clip(pos, base - 0.3, base + 0.3);
 
                 pos += presetOffset[1];
 
@@ -275,6 +264,14 @@ public class Turret {
 
     public void spinUp(boolean isSpinningUp) {
         this.isSpinningUp = isSpinningUp;
+    }
+
+    public void vectorDrop() {
+        vectorServo.setPosition(RobotConstants.vectorDropPos);
+    }
+
+    public void vectorPlugOut() {
+        vectorServo.setPosition(RobotConstants.vectorInitPos);
     }
 
     public double[] getCurrentTargets() {
@@ -500,6 +497,9 @@ public class Turret {
         blockerServo = hardwareMap.get(Servo.class, RobotConstants.blockerServoName);
         blockerServo.setPosition(RobotConstants.blockerBlockingPos);
         isBlocking = true;
+
+        vectorServo = hardwareMap.get(Servo.class, RobotConstants.vectorServoName);
+        vectorServo.setPosition(RobotConstants.vectorInitPos);
 
         et.reset();
         yawTimer.reset();

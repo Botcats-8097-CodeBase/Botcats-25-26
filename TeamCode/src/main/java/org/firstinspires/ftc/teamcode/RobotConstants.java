@@ -18,7 +18,7 @@ public class RobotConstants {
 
     public static String intakeMotorName = "intake";
     public static DcMotorSimple.Direction intakeMotorDirection = DcMotorSimple.Direction.FORWARD;
-    public static double intakeMotorPower = 0.9;
+    public static double intakeMotorPower = 0.85;
 
     public static String lowColorSensorName = "lowColor";
     public static String highColorSensorName = "highColor";
@@ -47,8 +47,12 @@ public class RobotConstants {
     public static double blockerBlockingPos = 0.108;
     public static double blockerShootingPos = 0.42;
 
+    public static String vectorServoName = "vector";
+    public static double vectorInitPos = 0.3;
+    public static double vectorDropPos = 0.0;
+
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
     public static double[] fullSpeedPreset = {2.20, 0.80}; // 70
     public static double[] closestSpeedPreset = {1.633, 0.67}; //{1.45, 0.50};
-//69
+
 }

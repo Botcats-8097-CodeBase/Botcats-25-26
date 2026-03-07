@@ -296,7 +296,7 @@ public class HAD12 extends OpMode {
         follower = Constants.createFollower(hardwareMap);
 
         robot.turret.pTelemetry = pTelemetry;
-        robot.turret.shootOverride = 0.4;
+        robot.turret.shootOverride = 0.6;
 
         ActionManager.schedule(buildAction());
     }

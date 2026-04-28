@@ -116,8 +116,8 @@ public class Turret {
 
         if (targetPreset[1] == -1) {
             if (!spinnerMotor1.velocityFilter.isDataless()) {
-                double base = basePreset[1];
-                double pos = angleTable.interpolate(distError);
+                double pos = basePreset[1];
+//                double pos = angleTable.interpolate(distError);
 
                 double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
 
@@ -125,7 +125,7 @@ public class Turret {
                 pos += error * kv;
 
                 pos = clip(pos, 0.0, 1.0);
-                pos = clip(pos, base - 0.3, base + 0.3);
+                pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
 
                 pos += presetOffset[1];
 

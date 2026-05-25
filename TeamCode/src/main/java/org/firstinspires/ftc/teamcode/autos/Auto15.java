@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.actions.Action;
 import org.firstinspires.ftc.teamcode.actions.ActionBuilder;
 import org.firstinspires.ftc.teamcode.actions.ActionManager;
@@ -53,14 +54,15 @@ public class Auto15 extends OpMode {
                 startPose = AutoConstants.blueFarStartPos;
             transativeEPose = new Pose(8, 63, Math.toRadians(155));
             scorePose = new Pose(53.5, 88, Math.toRadians(135));
-            parkPose = new Pose(53.5, 40, Math.toRadians(90));
+//            parkPose = new Pose(53.5, 40, Math.toRadians(90));
+            parkPose = new Pose(40, 64, Math.toRadians(90));
         } else {
             if (isClose)
                 startPose = AutoConstants.redCloseStartPos;
             else
                 startPose = AutoConstants.redFarStartPos;
             scorePose = new Pose(90.5, 88, Math.toRadians(45));
-            parkPose = new Pose(90.5, 40, Math.toRadians(90));
+            parkPose = new Pose(104, 64, Math.toRadians(90));
             transativeEPose = new Pose(8, 63, Math.toRadians(155)).mirror();
             stripXCoordS = 98;
             stripXCoordE = 120;
@@ -293,6 +295,8 @@ public class Auto15 extends OpMode {
 
     @Override
     public void init_loop() {
+        robot.turret.hookServo.setPosition(RobotConstants.hookUpPos);
+
         int colorNum = isRed ? 1 : 0;
         id = isRed ? 24 : 20;
         pTelemetry.addData("team", color[colorNum]);

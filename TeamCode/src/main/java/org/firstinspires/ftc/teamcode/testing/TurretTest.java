@@ -6,6 +6,7 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.robot.Robot;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subcomponents.Turret;
@@ -22,8 +23,8 @@ public class TurretTest extends OpMode {
 
     double targetTurretAngle = 0;
 
-    public static double targetSpeed = 1.75;
-    public static double targetServoAngle = 0.30;
+    public static double targetSpeed = 1.825;
+    public static double targetServoAngle = 0.265;
 
     @Override
     public void init() {
@@ -59,7 +60,8 @@ public class TurretTest extends OpMode {
 
         pTelemetry.addData("turret preset speed", targetSpeed);
         pTelemetry.addData("turret preset angle", targetServoAngle);
-
+        pTelemetry.addData("curr velocity", turret.spinnerMotor1.getVelocity());
+        pTelemetry.addData("targ velocity", turret.spinnerMotor1.getTargetVelocity());
         turret.faceTo(targetTurretAngle);
 
         turret.loop();

@@ -139,4 +139,5 @@ public class VelocityMotor {
     public void setMaxPower(double maxPower) {
         this.maxPower = maxPower;
     }
+
 }

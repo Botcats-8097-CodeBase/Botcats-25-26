@@ -24,8 +24,8 @@ public class RobotConstants {
     public static String highColorSensorName = "highColor";
 
     public static String yawTurretMotorName = "yawTurret";
-    public static double yawTurretStartAngle = 35.95;
-    public static double yawTurretMaxAngle = 224;
+    public static double yawTurretStartAngle = 86.57;
+    public static double yawTurretMaxAngle = 180;
     public static double yawTurretMinAngle = -40;
 
     public static String yawTurretEncoderName = "yawTurretEncoder";
@@ -43,16 +43,21 @@ public class RobotConstants {
     // if we want locked spin and disengaged, value = 0.68
     public static double clutchEndPos = 0.31;
 
+    public static String hookServoName = "hook";
+    public static double hookDownPos = 0;
+    public static double hookUpPos = 0.125;
+
     public static String blockerServoName = "blocker";
-    public static double blockerBlockingPos = 0.108;
-    public static double blockerShootingPos = 0.42;
+    public static double blockerBlockingPos = 0.055;
+    public static double blockerShootingPos = 0.348;
 
     public static String vectorServoName = "vector";
     public static double vectorInitPos = 0.3;
     public static double vectorDropPos = 0.0;
 
     // All presets are in this format {spinnerSpeed, pitchTurretPosition}
-    public static double[] fullSpeedPreset = {2.20, 0.80}; // 70
-    public static double[] closestSpeedPreset = {1.633, 0.67}; //{1.45, 0.50};
+    public static double[] fullSpeedPreset = {2.20, 0.50}; // 80
+    public static double[] closestSpeedPreset = {1.7, 0.10}; //{1.45, 0.50};
+    //0.67
 
 }

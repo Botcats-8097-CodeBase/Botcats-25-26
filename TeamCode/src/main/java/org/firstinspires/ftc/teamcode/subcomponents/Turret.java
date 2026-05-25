@@ -43,6 +43,7 @@ public class Turret {
     public DcMotor intakeMotor;
     public Servo blockerServo;
     public Servo vectorServo;
+    public Servo hookServo;
     public CustomColorSensor lowColor = new CustomColorSensor();
     public CustomColorSensor highColor = new CustomColorSensor();
 
@@ -106,7 +107,7 @@ public class Turret {
         if (targetPreset[0] == -1) {
             double base = basePreset[0];
 
-            double shootSpeed = speedTable.interpolate(distError);
+            double shootSpeed = quadInterpolation(distError);
             shootSpeed = clip(shootSpeed, base - 0.3, base + 0.3);
             shootSpeed += presetOffset[0];
             currentTargets[0] = shootSpeed;
@@ -115,23 +116,25 @@ public class Turret {
         }
 
         if (targetPreset[1] == -1) {
-            if (!spinnerMotor1.velocityFilter.isDataless()) {
-                double pos = basePreset[1];
-//                double pos = angleTable.interpolate(distError);
-
-                double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
-
-                double kv = isShootClose ? 0.1 * 3 : 0.04; // increased far kv from 0.3
-                pos += error * kv;
-
-                pos = clip(pos, 0.0, 1.0);
-                pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
-
-                pos += presetOffset[1];
-
-                currentTargets[1] = pos;
-            }
-        } else {
+            currentTargets[1] = basePreset[1];
+////            if (!spinnerMotor1.velocityFilter.isDataless()) {
+////                double pos = basePreset[1];
+//////                double pos = angleTable.interpolate(distError);
+////
+////                double error = spinnerMotor1.getVelocity() - spinnerMotor1.getTargetVelocity();
+////
+////                double kv = isShootClose ? 0.1 * 3 : 0.04; // increased far kv from 0.3
+////                pos += error * kv;
+////
+////                pos = clip(pos, 0.0, 1.0);
+////                pos = clip(pos, basePreset[1] - 0.3, basePreset[1] + 0.3);
+////
+////                pos += presetOffset[1];
+////
+////                currentTargets[1] = pos;
+////            }
+        }
+        else {
             currentTargets[1] = targetPreset[1];
         }
 
@@ -155,6 +158,9 @@ public class Turret {
                         unBlock();
                     } else if (currTime < 300) {
                         clutch();
+                        // TODO: TUNE
+                        // speed adjustment between shots
+//                        spinnerMotor1.setVelController(new PIDFController(1.8, 0.002, 1.1, 0.420, 150));
                     } else {
                         if (shootOverride == -1) {
                             intakeMotor.setPower(RobotConstants.intakeMotorPower);
@@ -172,6 +178,8 @@ public class Turret {
             pitchTurretServo.setPosition(currentTargets[1]);
         } else {
             if (isSpinningUp) {
+                // initial getting up to speed
+//                spinnerMotor1.setVelController(new PIDFController(1.6, 0.002, 1.1, 0.420, 150));
                 spinnerMotor1.setTargetVelocity(currentTargets[0]);
                 pitchTurretServo.setPosition(currentTargets[1]);
             } else {
@@ -197,7 +205,8 @@ public class Turret {
                     isFirstIntake = false;
                 }
 
-                if (highColor.checkColor() && lowColor.checkColor()) {
+//                if (highColor.checkColor() && lowColor.checkColor()) {
+                if (highColor.checkColor()) {
                     unClutch();
                 }
 
@@ -212,7 +221,9 @@ public class Turret {
                 intakeMotor.setPower(0);
 
                 if (clutchTimer.milliseconds() > 200) {
-                    if (!lowColor.checkColor() || !highColor.checkColor())
+//                    if (!lowColor.checkColor() || !highColor.checkColor())
+                    if (!highColor.checkColor())
+
                         clutch();
                 }
             }
@@ -395,6 +406,10 @@ public class Turret {
         setYawPos(yawTurretEncoder.getAngle0to360());
     }
 
+    public double quadInterpolation(double distError) {
+        return 0.000208011*(distError*distError)+0.0124927*(distError)+1.39991;
+    }
+
     TableInterpolation speedTable = new TableInterpolation(
             new ArrayList<>(List.of(
                     -40.0,
@@ -483,6 +498,7 @@ public class Turret {
         clutchServo.setPosition(RobotConstants.clutchStartPos); //this should be in the "locked-disengaged" position
         isClutched = false;
 
+        hookServo = hardwareMap.get(Servo.class, RobotConstants.hookServoName);
 
         yawTurretEncoder = hardwareMap.get(AS5600.class, RobotConstants.yawTurretEncoderName);
 

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.testing;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
@@ -9,7 +9,6 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -26,8 +25,8 @@ import org.firstinspires.ftc.teamcode.utils.Vector2D;
 
 import java.util.List;
 
-@TeleOp(name = "!teleopfull")
-public class TeleOpFull extends OpMode {
+@TeleOp(name = "test shooting")
+public class ShootingTest extends OpMode {
 
     List<LynxModule> allHubs;
 
@@ -63,7 +62,7 @@ public class TeleOpFull extends OpMode {
 
     @Override
     public void loop() {
-        pTelemetry.addLine("---------- TeleOp Full ----------");
+        pTelemetry.addLine("---------- TeleOp Test ----------");
 
         float dt = (float) et.milliseconds();
         pTelemetry.addData("dt", dt);
@@ -87,7 +86,7 @@ public class TeleOpFull extends OpMode {
         if (gamepad1.right_trigger < 0.5) pTelemetry.addData("Speed Mode", "on");
         else
         {
-            pTelemetry.addData("Speed Mode", "off");
+//            pTelemetry.addData("Speed Mode", "off");
             coefficient = 0.35;
         }
 
@@ -105,7 +104,7 @@ public class TeleOpFull extends OpMode {
             turret.manualOverride();
         }
 
-        pTelemetry.addData("is auto aiming", isAutoAiming);
+//        pTelemetry.addData("is auto aiming", isAutoAiming);
 
         if (gamepad1.dpadLeftWasPressed()) isConstantPreset = !isConstantPreset;
         if (gamepad1.backWasPressed()) isAutoAiming = !isAutoAiming;
@@ -124,7 +123,7 @@ public class TeleOpFull extends OpMode {
             if (gamepad1.dpad_down) targetTurretAngle -= 2;
             if (gamepad1.dpad_up) targetTurretAngle += 2;
 
-            pTelemetry.addData("targetTurretAngle", targetTurretAngle);
+//            pTelemetry.addData("targetTurretAngle", targetTurretAngle);
 
             turret.faceTo(targetTurretAngle);
 
@@ -141,13 +140,15 @@ public class TeleOpFull extends OpMode {
             double facingTarget = turret.autoFace() + turretOffset;
             turret.faceTo(facingTarget);
 
-            pTelemetry.addData("facingTarget", facingTarget);
+//            pTelemetry.addData("facingTarget", facingTarget);
             pTelemetry.addData("distError", turret.distError);
         }
 
         pTelemetry.addData("x", robotPos.getX(DistanceUnit.INCH));
         pTelemetry.addData("y", robotPos.getY(DistanceUnit.INCH));
-        pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
+//        pTelemetry.addData("pinpoint yaw", robotPos.getHeading(AngleUnit.DEGREES));
+
+        pTelemetry.addData("pitch val", turret.pitchTurretServo.getPosition());
 
         pTelemetry.update();
 
@@ -207,8 +208,6 @@ public class TeleOpFull extends OpMode {
     public void start() {
         super.start();
         et.reset();
-
-        turret.hookServo.setPosition(RobotConstants.hookDownPos);
 
         if (isBlackBoardPos && blackboard.get("x") != null && blackboard.get("y") != null && blackboard.get("heading") != null && blackboard.get("yawPos") != null) {
             initPose = new Pose2D(
